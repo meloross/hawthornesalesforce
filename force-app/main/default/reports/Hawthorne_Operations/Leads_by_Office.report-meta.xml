@@ -3,9 +3,10 @@
     <name>Leads by Office</name>
     <format>Summary</format>
     <reportType>LeadList</reportType>
+    <scope>org</scope>
     <showDetails>false</showDetails>
     <chart>
-        <chartType>Donut</chartType>
+        <chartType>HorizontalBar</chartType>
         <groupingColumn>LEAD.Office__c</groupingColumn>
         <chartSummaries>
             <axisBinding>y</axisBinding>
@@ -18,4 +19,13 @@
         <field>LEAD.Office__c</field>
         <sortOrder>Asc</sortOrder>
     </groupingsDown>
+    <columns>
+        <field>STATUS</field>
+    </columns>
+    <columns>
+        <field>LEAD.Lead_Vendor__c</field>
+    </columns>
+    <columns>
+        <field>LEAD.TCPA_Scrub_Status__c</field>
+    </columns>
 </Report>

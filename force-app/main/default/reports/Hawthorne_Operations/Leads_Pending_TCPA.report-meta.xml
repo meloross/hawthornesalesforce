@@ -3,7 +3,20 @@
     <name>Leads Pending TCPA Scrub</name>
     <format>Tabular</format>
     <reportType>LeadList</reportType>
-    <showDetails>false</showDetails>
+    <scope>org</scope>
+    <showDetails>true</showDetails>
+    <columns>
+        <field>STATUS</field>
+    </columns>
+    <columns>
+        <field>LEAD.Office__c</field>
+    </columns>
+    <columns>
+        <field>LEAD.Lead_Vendor__c</field>
+    </columns>
+    <columns>
+        <field>LEAD.TCPA_Scrub_Status__c</field>
+    </columns>
     <filter>
         <criteriaItems>
             <column>LEAD.TCPA_Scrub_Status__c</column>

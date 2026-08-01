@@ -3,6 +3,7 @@
     <name>Leads by Office and Status</name>
     <format>Matrix</format>
     <reportType>LeadList</reportType>
+    <scope>org</scope>
     <showDetails>false</showDetails>
     <groupingsDown>
         <dateGranularity>Day</dateGranularity>
@@ -14,4 +15,7 @@
         <field>STATUS</field>
         <sortOrder>Asc</sortOrder>
     </groupingsAcross>
+    <columns>
+        <field>LEAD.Lead_Vendor__c</field>
+    </columns>
 </Report>
