@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <name>Leads Pending TCPA Scrub</name>
+    <format>Tabular</format>
+    <reportType>LeadList</reportType>
+    <showDetails>false</showDetails>
+    <filter>
+        <criteriaItems>
+            <column>LEAD.TCPA_Scrub_Status__c</column>
+            <operator>equals</operator>
+            <value>Pending</value>
+        </criteriaItems>
+    </filter>
+</Report>

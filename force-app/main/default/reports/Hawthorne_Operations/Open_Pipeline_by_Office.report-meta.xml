@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <name>Open Pipeline by Office</name>
+    <format>Summary</format>
+    <reportType>Opportunity</reportType>
+    <showDetails>false</showDetails>
+    <chart>
+        <chartType>HorizontalBar</chartType>
+        <groupingColumn>OPPORTUNITY.Office__c</groupingColumn>
+        <chartSummaries>
+            <axisBinding>y</axisBinding>
+            <aggregate>Sum</aggregate>
+            <column>OPPORTUNITY.HFS_Revenue__c</column>
+        </chartSummaries>
+        <title>Open Pipeline by Office</title>
+    </chart>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>OPPORTUNITY.Office__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+    <columns>
+        <field>OPPORTUNITY.Total_Debt__c</field>
+        <aggregateTypes>Sum</aggregateTypes>
+    </columns>
+    <columns>
+        <field>OPPORTUNITY.HFS_Revenue__c</field>
+        <aggregateTypes>Sum</aggregateTypes>
+    </columns>
+    <filter>
+        <criteriaItems>
+            <column>STAGE_NAME</column>
+            <operator>notEqual</operator>
+            <value>Closed Won,Closed Lost</value>
+        </criteriaItems>
+    </filter>
+</Report>

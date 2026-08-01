@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <name>Leads by TCPA Scrub Status</name>
+    <format>Summary</format>
+    <reportType>LeadList</reportType>
+    <showDetails>false</showDetails>
+    <chart>
+        <chartType>HorizontalBar</chartType>
+        <groupingColumn>LEAD.TCPA_Scrub_Status__c</groupingColumn>
+        <chartSummaries>
+            <axisBinding>y</axisBinding>
+            <column>RowCount</column>
+        </chartSummaries>
+        <title>Leads by TCPA Scrub Status</title>
+    </chart>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>LEAD.TCPA_Scrub_Status__c</field>
+        <sortOrder>Asc</sortOrder>
+    </groupingsDown>
+</Report>
