@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Service_Fee_Amount__c</fullName>
     <label>Service Fee Amount</label>
-    <formula>Total_Debt__c * Service_Fee_Percent__c / 100</formula>
+    <formula>Total_Debt__c * Service_Fee_Percent__c</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <required>false</required>
     <precision>18</precision>
