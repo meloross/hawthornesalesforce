@@ -27,8 +27,12 @@
 | Valicia McRoy | 005fn000006vfZPAAY | valicia@hawthornefs.com.hfs | valicia@hawthornefs.com | New Jersey Rep | HFS Hybrid | ET |
 | Kalyna Demchuk | 005fn000006vfZQAAY | kalyna@hawthornefs.com.hfs | kalyna@hawthornefs.com | Corporate / RevOps | **none (see gap)** | ET |
 
-## Open gap
-- **"HFS Manager" permission set does not exist yet.** Kalyna Demchuk (Corporate / RevOps) has her user + role but **no rep permission set**. Build an `HFS Manager` permission set (broad cross-office Lead + Opportunity read, plus edit) and assign it to her.
+## Resolved gap — HFS Manager (2026-08-01)
+- **`HFS_Manager` permission set BUILT, DEPLOYED & ASSIGNED to Kalyna Demchuk.** Deploy ID 0Affn000004qdcTCAQ; PermissionSet Id `0PSfn000004uqPpGAI`; assignment record `0Pafn00000DeF5rCAF`. It is **READ-ONLY** (reporting manager), NOT edit: Lead + Opportunity Read + **View All**; Account/Contact/Task Read; read-only FLS on all custom Lead/Opp fields; Hawthorne Sales app + Lead/Opp/Reports/Dashboards tabs; **RunReports**; no Create/Edit/Delete/Modify All. Hawthorne Operations **report + dashboard folders shared View** to the `Corporate_RevOps` role (reaches Kalyna). Kalyna still INACTIVE — access applies when activated.
+
+## Admin user — Mar Mirza (DATA — 2026-08-01)
+- **New System Administrator user created INACTIVE:** `Mar Mirza`, Id `005fn000006wJjZAAU`, username `mar@hawthornefs.com.hfs`, email `mar@hawthornefs.com`, Profile **System Administrator** (Salesforce license). No password set (Rahul activates + Mar sets own password later).
+- **Old account `mar@hawthornefs.com` DEACTIVATED:** `Umar Mirza`, Id `005fn000006vRT3AAM` — was an unused (never logged in, 0 login history) API-only account on the *Salesforce Integration* license. Could not be converted to System Administrator (cross-license), so it was deactivated and a fresh admin user created instead. Its username `mar@hawthornefs.com` stays reserved by the deactivated record; the new login is `.hfs`-suffixed per this org's convention. **To make the new login exactly `mar@hawthornefs.com`, the old record must be renamed first (may send a username-change email) — not done.**
 
 ## Activation (later, at launch — NOT done now)
 - Set `IsActive = true` (consumes 1 Salesforce license each). Then the org's login/welcome flow applies.
