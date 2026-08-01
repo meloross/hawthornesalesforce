@@ -25,10 +25,15 @@
 | Miles Wilson | 005fn000006vfZNAAY | miles@hawthornefs.com.hfs | miles@hawthornefs.com | Miami Rep | HFS Hybrid | ET |
 | Yessica Gonzalez | 005fn000006vfZOAAY | yessica@hawthornefs.com.hfs | yessica@hawthornefs.com | New Jersey Rep | HFS Hybrid | ET |
 | Valicia McRoy | 005fn000006vfZPAAY | valicia@hawthornefs.com.hfs | valicia@hawthornefs.com | New Jersey Rep | HFS Hybrid | ET |
-| Kalyna Demchuk | 005fn000006vfZQAAY | kalyna@hawthornefs.com.hfs | kalyna@hawthornefs.com | Corporate / RevOps | **none (see gap)** | ET |
+| Kalyna Demchuk | 005fn000006vfZQAAY | kalyna@hawthornefs.com.hfs | kalyna@hawthornefs.com | Corporate / RevOps | HFS_Manager | ET |
 
 ## Resolved gap — HFS Manager (2026-08-01)
-- **`HFS_Manager` permission set BUILT, DEPLOYED & ASSIGNED to Kalyna Demchuk.** Deploy ID 0Affn000004qdcTCAQ; PermissionSet Id `0PSfn000004uqPpGAI`; assignment record `0Pafn00000DeF5rCAF`. It is **READ-ONLY** (reporting manager), NOT edit: Lead + Opportunity Read + **View All**; Account/Contact/Task Read; read-only FLS on all custom Lead/Opp fields; Hawthorne Sales app + Lead/Opp/Reports/Dashboards tabs; **RunReports**; no Create/Edit/Delete/Modify All. Hawthorne Operations **report + dashboard folders shared View** to the `Corporate_RevOps` role (reaches Kalyna). Kalyna still INACTIVE — access applies when activated.
+- **`HFS_Manager` permission set BUILT, DEPLOYED & ASSIGNED.** Deploy ID 0Affn000004qdcTCAQ; PermissionSet Id `0PSfn000004uqPpGAI`. It is **READ-ONLY on records** (reporting manager), NOT edit: Lead + Opportunity Read + **View All**; Account/Contact/Task Read; read-only FLS on all custom Lead/Opp fields; Hawthorne Sales app + Lead/Opp/Reports/Dashboards tabs; no Create/Edit/Delete/Modify All. Hawthorne Operations **report + dashboard folders shared View** to the `Corporate_RevOps` role (reaches all holders in that role).
+- **Reporting/authoring perms (upgraded 2026-08-01, Deploy ID 0Affn000004qfO9CAI):** RunReports, Create and Customize Reports, Report Builder, Create Report Folders, Create and Customize Dashboards, Create Dashboard Folders, Edit My Dashboards. → Holders can build their OWN reports/dashboards but still cannot edit records.
+- **Assignees:** Kalyna Demchuk (`0Pafn00000DeF5rCAF`) · Isabel Banks (`0Pafn00000DeRbXCAV`). Both INACTIVE — access applies when activated.
+
+## Manager user — Isabel Banks (DATA — 2026-08-01)
+- **Created INACTIVE:** `Isabel Banks`, Id `005fn000006wL8fAAE`, username `isabel@hawthornefs.com.hfs`, email `isabel@hawthornefs.com`, base Profile **Minimum Access - Salesforce** (Salesforce license), **Role `Corporate_RevOps`** (so the folder shares reach her). No password. `HFS_Manager` permission set assigned. Same manager setup as Kalyna.
 
 ## Admin user — Mar Mirza (DATA — 2026-08-01)
 - **New System Administrator user created INACTIVE:** `Mar Mirza`, Id `005fn000006wJjZAAU`, username `mar@hawthornefs.com.hfs`, email `mar@hawthornefs.com`, Profile **System Administrator** (Salesforce license). No password set (Rahul activates + Mar sets own password later).
