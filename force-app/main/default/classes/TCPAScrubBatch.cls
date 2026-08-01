@@ -38,6 +38,7 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
         List<Compliance_Scrub_Log__c> logs = new List<Compliance_Scrub_Log__c>();
         String jobKey = (bc != null && bc.getJobId() != null) ? String.valueOf(bc.getJobId()) : null;
         Datetime nowTs = Datetime.now();
+        Id poolId = poolQueueId();
 
         for (Lead l : scope) {
             String d = leadToDigits.get(l.Id);
@@ -82,6 +83,10 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
             }
 
             l.TCPA_Scrub_Status__c = status;
+            // Clear leads flow into the pool so LeadDistributionBatch can allot them to offices.
+            if (status == 'Clear' && poolId != null) {
+                l.OwnerId = poolId;
+            }
             toUpdate.add(l);
             logs.add(log);
             totalProcessed++;
@@ -94,6 +99,15 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
     public void finish(Database.BatchableContext bc) {
         System.debug('TCPAScrubBatch finished. processed=' + totalProcessed
             + ' clear=' + clearCount + ' dnc=' + dncCount + ' error=' + errorCount);
+        // Chain distribution so freshly-scrubbed Clear leads get allotted to offices immediately.
+        if (!Test.isRunningTest()) {
+            Database.executeBatch(new LeadDistributionBatch(), 200);
+        }
+    }
+
+    private static Id poolQueueId() {
+        List<Group> gs = [SELECT Id FROM Group WHERE Type = 'Queue' AND DeveloperName = 'HFS_Lead_Pool' LIMIT 1];
+        return gs.isEmpty() ? null : gs[0].Id;
     }
 
     private static String truncate(String s, Integer len) {

@@ -3,54 +3,20 @@
     <assignmentRule>
         <fullName>HFS Lead Routing</fullName>
         <active>true</active>
+        <!-- Compliance hold: any not-yet-Clear lead (Pending/Flagged/Do Not Contact/Error) stays held. Safety first. -->
         <ruleEntry>
             <criteriaItems>
                 <field>Lead.TCPA_Scrub_Status__c</field>
                 <operation>equals</operation>
-                <value>Do Not Contact,Flagged</value>
+                <value>Pending,Flagged,Do Not Contact,Error</value>
             </criteriaItems>
             <assignedTo>Compliance_Hold</assignedTo>
             <assignedToType>Queue</assignedToType>
         </ruleEntry>
-        <ruleEntry>
-            <criteriaItems>
-                <field>Lead.Office__c</field>
-                <operation>equals</operation>
-                <value>HFS_TPA</value>
-            </criteriaItems>
-            <assignedTo>Tampa_Leads</assignedTo>
-            <assignedToType>Queue</assignedToType>
-        </ruleEntry>
-        <ruleEntry>
-            <criteriaItems>
-                <field>Lead.Office__c</field>
-                <operation>equals</operation>
-                <value>HFS_MIA</value>
-            </criteriaItems>
-            <assignedTo>Miami_Leads</assignedTo>
-            <assignedToType>Queue</assignedToType>
-        </ruleEntry>
-        <ruleEntry>
-            <criteriaItems>
-                <field>Lead.Office__c</field>
-                <operation>equals</operation>
-                <value>HFS_NJ</value>
-            </criteriaItems>
-            <assignedTo>New_Jersey_Leads</assignedTo>
-            <assignedToType>Queue</assignedToType>
-        </ruleEntry>
-        <ruleEntry>
-            <criteriaItems>
-                <field>Lead.Office__c</field>
-                <operation>equals</operation>
-                <value>HFS_NY</value>
-            </criteriaItems>
-            <assignedTo>New_York_Leads</assignedTo>
-            <assignedToType>Queue</assignedToType>
-        </ruleEntry>
+        <!-- Everything else (Clear, not yet office-assigned) lands in the pool. LeadDistributionBatch is the ONLY thing that sets Office__c. -->
         <ruleEntry>
             <formula>true</formula>
-            <assignedTo>Unassigned_Overflow</assignedTo>
+            <assignedTo>HFS_Lead_Pool</assignedTo>
             <assignedToType>Queue</assignedToType>
         </ruleEntry>
     </assignmentRule>
