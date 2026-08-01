@@ -51,6 +51,32 @@ private class TCPAScrubBatchTest {
         System.assert(true, 'scheduler executed');
     }
 
+    // "Not enough credits" body (HTTP 200) -> lead Error, message logged to Raw_Response__c, never Clear.
+    @isTest static void testBatchCreditsError() {
+        insert new Lead(LastName='Credits', Company='Credits Co', Phone='5551239999', TCPA_Scrub_Status__c='Pending');
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"error":"You do not have enough credits"}'));
+        Test.startTest();
+        Database.executeBatch(new TCPAScrubBatch(), 2000);
+        Test.stopTest();
+
+        Lead l = [SELECT TCPA_Scrub_Status__c FROM Lead WHERE Phone='5551239999' LIMIT 1];
+        System.assertEquals('Error', l.TCPA_Scrub_Status__c, 'credits error must NOT be Clear/DNC');
+        Compliance_Scrub_Log__c log = [SELECT Result__c, Raw_Response__c FROM Compliance_Scrub_Log__c WHERE Phone__c='5551239999' LIMIT 1];
+        System.assertEquals('Error', log.Result__c);
+        System.assert(log.Raw_Response__c != null && log.Raw_Response__c.contains('credits'), 'error body logged to Raw_Response__c');
+    }
+
+    // 401 forbidden -> lead Error.
+    @isTest static void testBatch401() {
+        insert new Lead(LastName='Forbid', Company='Forbid Co', Phone='5551238888', TCPA_Scrub_Status__c='Pending');
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(401, '{"code":"rest_forbidden"}'));
+        Test.startTest();
+        Database.executeBatch(new TCPAScrubBatch(), 2000);
+        Test.stopTest();
+        Lead l = [SELECT TCPA_Scrub_Status__c FROM Lead WHERE Phone='5551238888' LIMIT 1];
+        System.assertEquals('Error', l.TCPA_Scrub_Status__c);
+    }
+
     @isTest static void testInvocable() {
         insert new Lead(LastName='India', Company='India Co', Phone='5551230010', TCPA_Scrub_Status__c='Pending');
         Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":{"5551230010":{"clean":1,"is_bad_number":false}}}'));

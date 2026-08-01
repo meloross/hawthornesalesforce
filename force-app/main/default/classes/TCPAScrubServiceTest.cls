@@ -75,4 +75,53 @@ private class TCPAScrubServiceTest {
         System.assertEquals(0, res.size());
         System.assertEquals(true, r.isError);
     }
+
+    // HTTP 200 but vendor error body -> Error (never Clear/DNC), message captured + raw logged.
+    @isTest static void testNotEnoughCreditsBody() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"error":"You do not have enough credits"}'));
+        Test.startTest();
+        TCPAScrubService.ScrubResult one = TCPAScrubService.scrubOne('5551230003');
+        Map<String, TCPAScrubService.ScrubResult> mass = TCPAScrubService.scrubPhones(new List<String>{'5551230004'});
+        Test.stopTest();
+        System.assertEquals(true, one.isError, 'error-key body must be Error');
+        System.assertEquals(false, one.clean, 'must not be clean');
+        System.assert(one.errorMessage.contains('credits'), 'message captured: ' + one.errorMessage);
+        System.assertEquals(true, mass.get('5551230004').isError);
+        System.assert(mass.get('5551230004').rawResponse.contains('credits'), 'raw body carried for logging');
+    }
+
+    // HTTP 401 forbidden -> Error, no backup escalation (not a 5xx).
+    @isTest static void test401Forbidden() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(401, '{"code":"rest_forbidden"}'));
+        Test.startTest();
+        TCPAScrubService.ScrubResult one = TCPAScrubService.scrubOne('5551230005');
+        Map<String, TCPAScrubService.ScrubResult> mass = TCPAScrubService.scrubPhones(new List<String>{'5551230006'});
+        Test.stopTest();
+        System.assertEquals(true, one.isError, '401 must be Error');
+        System.assertEquals(false, one.clean);
+        System.assertEquals(true, mass.get('5551230006').isError);
+        System.assertEquals(false, mass.get('5551230006').clean);
+    }
+
+    // 200 with results but NO clean field -> Error (ambiguous never becomes Clear or DNC).
+    @isTest static void testMissingCleanField() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":{"is_bad_number":false}}'));
+        Test.startTest();
+        TCPAScrubService.ScrubResult one = TCPAScrubService.scrubOne('5551230007');
+        Map<String, TCPAScrubService.ScrubResult> mass = TCPAScrubService.scrubPhones(new List<String>{'5551230008'});
+        Test.stopTest();
+        System.assertEquals(true, one.isError, 'missing clean must be Error');
+        System.assertEquals(false, one.clean);
+        System.assertEquals(true, mass.get('5551230008').isError);
+    }
+
+    // Unparseable clean value -> Error.
+    @isTest static void testUnparseableClean() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":{"clean":"maybe"}}'));
+        Test.startTest();
+        TCPAScrubService.ScrubResult one = TCPAScrubService.scrubOne('5551230012');
+        Test.stopTest();
+        System.assertEquals(true, one.isError, 'unparseable clean must be Error');
+        System.assertEquals(false, one.clean);
+    }
 }

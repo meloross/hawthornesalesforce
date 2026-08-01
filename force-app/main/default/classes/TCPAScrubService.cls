@@ -59,6 +59,12 @@ public with sharing class TCPAScrubService {
 
         try {
             Map<String, Object> top = (Map<String, Object>) JSON.deserializeUntyped(raw);
+            // Top-level vendor error (e.g. {"error":"You do not have enough credits"}) -> every phone Error.
+            if (top.containsKey('error') && top.get('error') != null) {
+                String em = String.valueOf(top.get('error'));
+                for (String d : digits) { out.put(d, errorResult(d, em, raw)); }
+                return out;
+            }
             Object results = top.get('results');
             if (results instanceof Map<String, Object>) {
                 Map<String, Object> rm = (Map<String, Object>) results;
@@ -140,8 +146,29 @@ public with sharing class TCPAScrubService {
         ScrubResult r = new ScrubResult();
         r.phone = phone;
         r.rawResponse = raw;
-        String cleanStr = String.valueOf(m.get('clean'));
-        r.clean = (cleanStr == '1' || cleanStr == 'true');
+        // Explicit vendor error (e.g. {"error":"You do not have enough credits"}) -> Error, non-callable.
+        if (m.containsKey('error') && m.get('error') != null) {
+            r.isError = true;
+            r.errorMessage = String.valueOf(m.get('error'));
+            return r;
+        }
+        // 'clean' must be explicitly present and parseable as 0/1 (or true/false).
+        // Missing or unparseable -> Error (never allow an ambiguous response to become Clear or DNC).
+        Object cleanRaw = m.get('clean');
+        if (!m.containsKey('clean') || cleanRaw == null) {
+            r.isError = true;
+            r.errorMessage = 'Missing clean field in response';
+            return r;
+        }
+        String cleanStr = String.valueOf(cleanRaw);
+        Boolean cleanIsOne  = (cleanStr == '1' || cleanStr == 'true');
+        Boolean cleanIsZero = (cleanStr == '0' || cleanStr == 'false');
+        if (!cleanIsOne && !cleanIsZero) {
+            r.isError = true;
+            r.errorMessage = 'Unparseable clean value: ' + cleanStr;
+            return r;
+        }
+        r.clean = cleanIsOne;   // Clear is possible ONLY when clean is explicitly 1/true
         String badStr = String.valueOf(m.get('is_bad_number'));
         r.isBadNumber = (badStr == 'true' || badStr == '1');
         if (m.get('status') != null) r.status = String.valueOf(m.get('status'));
