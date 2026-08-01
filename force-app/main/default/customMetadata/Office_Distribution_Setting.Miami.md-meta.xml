@@ -22,4 +22,8 @@
         <field>Queue_DeveloperName__c</field>
         <value xsi:type="xsd:string">Miami_Leads</value>
     </values>
+    <values>
+        <field>Slack_Channel_Id__c</field>
+        <value xsi:type="xsd:string">C0BM6TFV3D1</value>
+    </values>
 </CustomMetadata>

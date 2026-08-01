@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Slack Integration</label>
+    <description>Grants the Slack_API external credential principal and the Slack pipeline-feed Apex classes. Assign to the user/automation that runs the Slack notifier + digest.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>Slack_API-SlackBot</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <classAccesses>
+        <apexClass>SlackService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SlackNotifier</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SlackDigestScheduler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SlackDigestBatch</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SlackTriggerState</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+</PermissionSet>

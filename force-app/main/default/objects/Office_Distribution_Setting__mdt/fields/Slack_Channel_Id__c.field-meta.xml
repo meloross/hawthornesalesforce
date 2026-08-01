@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Slack_Channel_Id__c</fullName>
+    <label>Slack Channel Id</label>
+    <length>40</length>
+    <type>Text</type>
+    <required>false</required>
+    <inlineHelpText>Slack channel ID (e.g. C0BMF3307AM) the pipeline feed posts to for this office. Blank = no Slack post for this office.</inlineHelpText>
+</CustomField>
