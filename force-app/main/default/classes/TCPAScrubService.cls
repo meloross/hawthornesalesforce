@@ -104,12 +104,12 @@ public with sharing class TCPAScrubService {
     public static ScrubResult scrubOne(String phone) {
         String d = normalize(phone);
         if (d == null) return errorResult(phone, 'Blank phone', null);
-        Map<String, Object> body = new Map<String, Object>{ 'phone' => d, 'type' => 'all' };
-        String payload = JSON.serialize(body);
+        // Single endpoint is WordPress/form-based: send form-urlencoded phone_number={digits}&type=all.
+        String payload = 'phone_number=' + EncodingUtil.urlEncode(d, 'UTF-8') + '&type=all';
 
-        HttpResponse resp = doCallout(PRIMARY + '/scrub/phone/', payload);
+        HttpResponse resp = doCallout(PRIMARY + '/scrub/phone/', payload, 'application/x-www-form-urlencoded');
         if (resp == null || resp.getStatusCode() >= 500) {
-            resp = doCallout(BACKUP + '/scrub/phone/', payload);
+            resp = doCallout(BACKUP + '/scrub/phone/', payload, 'application/x-www-form-urlencoded');
         }
         String raw = (resp != null) ? resp.getBody() : null;
         if (resp == null || resp.getStatusCode() >= 300) {
@@ -128,11 +128,15 @@ public with sharing class TCPAScrubService {
     }
 
     private static HttpResponse doCallout(String endpoint, String payload) {
+        return doCallout(endpoint, payload, 'application/json');
+    }
+
+    private static HttpResponse doCallout(String endpoint, String payload, String contentType) {
         try {
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
             req.setMethod('POST');
-            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Content-Type', contentType);
             req.setHeader('Accept', 'application/json');
             req.setTimeout(120000);
             req.setBody(payload);

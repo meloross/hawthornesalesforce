@@ -8,6 +8,20 @@ private class TCPAScrubServiceTest {
         System.assertEquals(null, TCPAScrubService.normalize(null));
     }
 
+    @isTest static void testScrubOneSendsPhoneNumberFormEncoded() {
+        TCPAScrubHttpMock mock = new TCPAScrubHttpMock(200, '{"results":{"clean":1,"is_bad_number":false}}');
+        Test.setMock(HttpCalloutMock.class, mock);
+        Test.startTest();
+        TCPAScrubService.ScrubResult r = TCPAScrubService.scrubOne('(407) 749-4791');
+        Test.stopTest();
+        System.assertEquals(true, r.clean);
+        String sentBody = mock.lastRequest.getBody();
+        System.assert(sentBody.contains('phone_number=4077494791'), 'body must carry phone_number: ' + sentBody);
+        System.assert(sentBody.contains('type=all'), 'type=all preserved: ' + sentBody);
+        System.assert(!sentBody.contains('"phone"'), 'must not send JSON "phone" key: ' + sentBody);
+        System.assertEquals('application/x-www-form-urlencoded', mock.lastRequest.getHeader('Content-Type'));
+    }
+
     @isTest static void testCleanSingle() {
         Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":{"clean":1,"is_bad_number":false}}'));
         Test.startTest();
