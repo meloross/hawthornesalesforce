@@ -100,4 +100,14 @@
         <field>Opportunity.HFS_Revenue__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Lead.Call_Disposition__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Lead.Disposition_Notes__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
 </Profile>
