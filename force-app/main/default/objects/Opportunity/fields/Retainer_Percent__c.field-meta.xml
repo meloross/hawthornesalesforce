@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Retainer_Percent__c</fullName>
+    <label>Retainer Percent</label>
+    <inlineHelpText>Front-loaded retainer % (default 12%).</inlineHelpText>
+    <defaultValue>12</defaultValue>
+    <precision>5</precision>
+    <scale>2</scale>
+    <required>false</required>
+    <type>Percent</type>
+</CustomField>

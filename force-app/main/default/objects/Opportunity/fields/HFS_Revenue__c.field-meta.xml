@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>HFS_Revenue__c</fullName>
+    <label>HFS Revenue</label>
+    <inlineHelpText>HFS take = 75% of total fee.</inlineHelpText>
+    <formula>Total_Fee_Amount__c * 0.75</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <required>false</required>
+    <precision>18</precision>
+    <scale>2</scale>
+    <type>Currency</type>
+</CustomField>

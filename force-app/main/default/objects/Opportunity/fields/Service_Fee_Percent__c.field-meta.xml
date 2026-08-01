@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Service_Fee_Percent__c</fullName>
+    <label>Service Fee Percent</label>
+    <inlineHelpText>Service fee % over the term (default 20%).</inlineHelpText>
+    <defaultValue>20</defaultValue>
+    <precision>5</precision>
+    <scale>2</scale>
+    <required>false</required>
+    <type>Percent</type>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Fee_Percent__c</fullName>
+    <label>Total Fee Percent</label>
+    <inlineHelpText>Total fee % (retainer + service; standard model = 32%).</inlineHelpText>
+    <formula>Retainer_Percent__c + Service_Fee_Percent__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <required>false</required>
+    <precision>5</precision>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>
