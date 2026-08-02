@@ -4,7 +4,7 @@
     <label>Close Lead ID</label>
     <inlineHelpText>External ID from Close CRM. The migration upserts on this (re-runnable, no duplicates) and it traces each Salesforce lead back to its Close record.</inlineHelpText>
     <externalId>true</externalId>
-    <length>40</length>
+    <length>80</length>
     <required>false</required>
     <type>Text</type>
     <unique>true</unique>
