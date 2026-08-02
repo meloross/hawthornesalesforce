@@ -6,7 +6,7 @@
 public with sharing class SlackNotifier implements Queueable, Database.AllowsCallouts {
 
     public class Notification {
-        public String kind;          // LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
+        public String kind;          // LEAD_ASSIGNED | LEAD_ENGAGED | LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
         public String officeCode;
         public String recordName;
         public String company;       // Lead
@@ -14,6 +14,7 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
         public Decimal totalDebt;    // Opp
         public Decimal hfsRevenue;   // Opp
         public Id ownerId;
+        public String detail;        // e.g. engagement type for LEAD_ENGAGED
     }
 
     private List<Notification> items;
@@ -32,6 +33,7 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
         for (Notification n : items) {
             String channel = SlackService.channelForOffice(n.officeCode);
             if (String.isBlank(channel)) continue;   // skip offices with no channel configured
+            if (Limits.getCallouts() >= Limits.getLimitCallouts()) break;  // stay within per-transaction callout cap (bulk-safe)
             String owner = (n.ownerId != null && ownerNames.containsKey(n.ownerId))
                 ? ownerNames.get(n.ownerId) : 'Unassigned';
             SlackService.postMessage(channel, compose(n, owner));
@@ -40,6 +42,15 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
 
     @TestVisible
     private String compose(Notification n, String owner) {
+        if (n.kind == 'LEAD_ASSIGNED') {
+            return ':rotating_light: *New clear lead — call now* — ' + safe(n.company)
+                + ' · ' + safe(n.recordName) + ' · owner ' + owner;
+        }
+        if (n.kind == 'LEAD_ENGAGED') {
+            String t = String.isBlank(n.detail) ? '' : ' (' + n.detail + ')';
+            return ':wave: *Lead engaged' + t + '* — ' + safe(n.company)
+                + ' · ' + safe(n.recordName) + ' · owner ' + owner;
+        }
         if (n.kind == 'LEAD_QUALIFIED' || n.kind == 'LEAD_APPT') {
             String label = (n.kind == 'LEAD_APPT') ? 'Appointment Set' : 'Qualified';
             return ':telephone_receiver: *' + label + '* — ' + safe(n.company)

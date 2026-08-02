@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Win_Back_Eligible__c</fullName>
+    <label>Win-Back Eligible</label>
+    <inlineHelpText>TRUE when disqualified via a soft disposition (Not Interested) — eligible for a later low-frequency win-back after a cool-off.</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

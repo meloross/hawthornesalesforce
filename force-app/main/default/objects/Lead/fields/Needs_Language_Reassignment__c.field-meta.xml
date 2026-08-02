@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Needs_Language_Reassignment__c</fullName>
+    <label>Needs Language Reassignment</label>
+    <inlineHelpText>TRUE on a Language Barrier disposition — route to a matching-language rep + language-appropriate drip.</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

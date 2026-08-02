@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Speed_to_Lead_At__c</fullName>
+    <label>Speed to Lead At</label>
+    <inlineHelpText>Timestamp the lead flipped to Assigned (Speed-to-Lead moment). For response-time reporting.</inlineHelpText>
+    <required>false</required>
+    <type>DateTime</type>
+</CustomField>

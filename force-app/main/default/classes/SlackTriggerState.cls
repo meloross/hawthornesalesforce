@@ -1,9 +1,10 @@
 /**
- * SlackTriggerState — per-transaction recursion guards for the Slack notify triggers.
- * Tracks record ids already notified this transaction so re-entrant updates (e.g. from
- * workflow field updates) don't double-post, while still allowing all chunks of a bulk DML.
+ * SlackTriggerState — per-transaction guards for the Lead/Opportunity triggers so re-entrant
+ * updates (workflow field updates, downstream DML) don't double-post or double-create tasks.
  */
 public class SlackTriggerState {
-    public static Set<Id> leadsNotified = new Set<Id>();
-    public static Set<Id> oppsNotified = new Set<Id>();
+    public static Set<Id> leadsNotified = new Set<Id>();      // Qualified/Appt Slack notify
+    public static Set<Id> oppsNotified = new Set<Id>();       // Opp Slack notify
+    public static Set<Id> assignedActioned = new Set<Id>();   // Speed-to-Lead task + Slack
+    public static Set<Id> callbackActioned = new Set<Id>();   // Callback-requested task
 }

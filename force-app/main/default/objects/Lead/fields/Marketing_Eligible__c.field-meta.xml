@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Marketing_Eligible__c</fullName>
+    <label>Marketing Eligible</label>
+    <inlineHelpText>TRUE when TCPA-Clear AND not SMS-opted-out AND not global DNC. Master marketing gate.</inlineHelpText>
+    <formula>ISPICKVAL(TCPA_Scrub_Status__c, &quot;Clear&quot;) &amp;&amp; NOT(SMS_Opt_Out__c) &amp;&amp; NOT(Global_DNC__c)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <type>Checkbox</type>
+</CustomField>

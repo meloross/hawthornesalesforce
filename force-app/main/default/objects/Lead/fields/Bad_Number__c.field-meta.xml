@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bad_Number__c</fullName>
+    <label>Bad Number</label>
+    <inlineHelpText>TRUE when the phone is bad/wrong (disposition). Suppresses SMS via SMS_Eligible__c.</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

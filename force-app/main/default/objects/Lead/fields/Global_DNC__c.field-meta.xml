@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Global_DNC__c</fullName>
+    <label>Global DNC</label>
+    <inlineHelpText>Global Do-Not-Contact. Set TRUE on a Do Not Call disposition. Makes Marketing_Eligible__c false.</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>
