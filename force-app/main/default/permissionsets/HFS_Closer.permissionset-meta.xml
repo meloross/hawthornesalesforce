@@ -78,6 +78,11 @@
         <editable>true</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Lead.Close_Lead_Id__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Lead.Office__c</field>
         <readable>true</readable>
         <editable>false</editable>

@@ -61,4 +61,10 @@
         <label>Converted</label>
         <converted>true</converted>
     </standardValue>
+    <standardValue>
+        <fullName>Enrolled</fullName>
+        <default>false</default>
+        <label>Enrolled</label>
+        <converted>false</converted>
+    </standardValue>
 </StandardValueSet>
