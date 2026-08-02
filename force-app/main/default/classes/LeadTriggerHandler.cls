@@ -15,6 +15,10 @@ public with sharing class LeadTriggerHandler {
 
     private static final Set<String> PERSISTENCE_DISPOS = new Set<String>{'No Answer', 'Left Voicemail', 'Busy'};
 
+    // Dispositions that HARD-suppress a disqualified lead from win-back. Everything else (incl. blank
+    // and 'Already Enrolled Elsewhere') is a SOFT disqualification -> win-back eligible.
+    private static final Set<String> HARD_SUPPRESS_DISPOS = new Set<String>{'Do Not Call', 'Bad/Wrong Number', 'Duplicate'};
+
     // ---------- BEFORE: field mutations ----------
     public static void handleBefore(List<Lead> news, Map<Id, Lead> oldMap) {
         Datetime nowTs = System.now();
@@ -64,7 +68,9 @@ public with sharing class LeadTriggerHandler {
                     if (elig) enterDrip(l, 'Nurture', nowTs);
                 } else if (l.Status == 'Disqualified') {
                     l.Current_Drip__c = 'None';   // exit — terminal, overrides any disposition-set drip
-                    if (l.Call_Disposition__c == 'Not Interested') l.Win_Back_Eligible__c = true;
+                    // Win-back on any SOFT disqualification — every Disqualified EXCEPT the hard-suppress
+                    // dispositions (Do Not Call, Bad/Wrong Number, Duplicate). 'Already Enrolled Elsewhere' counts as soft.
+                    l.Win_Back_Eligible__c = !HARD_SUPPRESS_DISPOS.contains(l.Call_Disposition__c);
                 } else if (l.Status == 'Converted') {
                     if (elig) enterDrip(l, 'Onboarding', nowTs);
                 }
@@ -73,9 +79,14 @@ public with sharing class LeadTriggerHandler {
     }
 
     // ---------- AFTER: tasks + Slack ----------
+    @TestVisible private static List<SlackNotifier.Notification> lastNotes;
+
     public static void handleAfter(List<Lead> news, Map<Id, Lead> oldMap) {
         List<Task> tasks = new List<Task>();
         List<SlackNotifier.Notification> notes = new List<SlackNotifier.Notification>();
+
+        // Newly-Assigned eligible leads grouped by office — drives the bulk-vs-single Slack decision below.
+        Map<String, List<Lead>> assignedByOffice = new Map<String, List<Lead>>();
 
         for (Lead l : news) {
             Lead prior = (oldMap != null) ? oldMap.get(l.Id) : null;
@@ -83,12 +94,16 @@ public with sharing class LeadTriggerHandler {
             String oldDispo = (prior != null) ? prior.Call_Disposition__c : null;
             Boolean elig = isMarketingEligible(l);
 
-            // -> Assigned : Speed-to-Lead rep alert (call-now task + Slack)
+            // -> Assigned : ALWAYS create the per-lead call-now Task (never drop a rep's work item).
+            // The Slack post is decided per-office after the loop: one summary for a bulk distribution run,
+            // a per-lead "call now" post for a single real-time assignment.
             if (l.Status == 'Assigned' && oldStatus != 'Assigned' && elig
                     && !SlackTriggerState.assignedActioned.contains(l.Id)) {
                 SlackTriggerState.assignedActioned.add(l.Id);
                 tasks.add(newTask(l, 'Call now — new clear lead'));
-                notes.add(leadNote('LEAD_ASSIGNED', l, null));
+                String officeKey = (l.Office__c == null) ? '' : l.Office__c;
+                if (!assignedByOffice.containsKey(officeKey)) assignedByOffice.put(officeKey, new List<Lead>());
+                assignedByOffice.get(officeKey).add(l);
             }
 
             // Callback Requested : rep callback task (drip paused)
@@ -107,7 +122,20 @@ public with sharing class LeadTriggerHandler {
             }
         }
 
+        // Speed-to-Lead Slack: >1 lead to the same office in one transaction (bulk distribution) -> ONE
+        // per-office summary; a single assignment -> the per-lead "call now" post. Keeps the channel from
+        // being spammed and stays within the per-transaction callout cap. Task already created for each.
+        for (String officeKey : assignedByOffice.keySet()) {
+            List<Lead> officeGroup = assignedByOffice.get(officeKey);
+            if (officeGroup.size() == 1) {
+                notes.add(leadNote('LEAD_ASSIGNED', officeGroup[0], null));
+            } else {
+                notes.add(assignedSummaryNote(officeKey, officeGroup.size()));
+            }
+        }
+
         if (!tasks.isEmpty()) insert tasks;
+        lastNotes = notes;   // @TestVisible: lets tests assert the bulk-vs-single decision
         if (!notes.isEmpty()) System.enqueueJob(new SlackNotifier(notes));
     }
 
@@ -131,6 +159,14 @@ public with sharing class LeadTriggerHandler {
             Priority = 'High',
             Status = 'Not Started'
         );
+    }
+
+    private static SlackNotifier.Notification assignedSummaryNote(String officeCode, Integer cnt) {
+        SlackNotifier.Notification n = new SlackNotifier.Notification();
+        n.kind = 'LEAD_ASSIGNED_BULK';
+        n.officeCode = officeCode;
+        n.leadCount = cnt;
+        return n;
     }
 
     private static SlackNotifier.Notification leadNote(String kind, Lead l, String detail) {

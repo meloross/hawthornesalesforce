@@ -48,6 +48,17 @@ public with sharing class SlackService {
         return null;
     }
 
+    /** Human-readable office label (CMDT MasterLabel, e.g. "Tampa") for an office code; falls back to the code. */
+    public static String officeLabel(String officeCode) {
+        if (String.isBlank(officeCode)) return officeCode;
+        for (Office_Distribution_Setting__mdt s : Office_Distribution_Setting__mdt.getAll().values()) {
+            if (s.Office_Code__c != null && officeCode.equalsIgnoreCase(s.Office_Code__c)) {
+                return String.isBlank(s.MasterLabel) ? officeCode : s.MasterLabel;
+            }
+        }
+        return officeCode;
+    }
+
     /** POST chat.postMessage with {channel, text, mrkdwn:true}. Parses ok/error. Never throws. */
     public static SlackResult postMessage(String channelId, String mrkdwnText) {
         SlackResult r = new SlackResult();

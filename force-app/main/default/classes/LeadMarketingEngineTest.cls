@@ -53,17 +53,28 @@ private class LeadMarketingEngineTest {
 
     @isTest
     static void disqualifiedSoftSetsWinBack() {
-        List<Lead> ls = makeClearLeads(2);
+        // Win-back = TRUE on any SOFT disqualification; FALSE only for the hard-suppress dispositions.
+        List<Lead> ls = makeClearLeads(6);
         insert ls;
         Map<Id, Lead> old = priorMap(ls);
-        // soft DQ (Not Interested) -> win-back eligible; hard DQ (Duplicate) -> not
+        // SOFT -> win-back eligible
         ls[0].Status = 'Disqualified'; ls[0].Call_Disposition__c = 'Not Interested';
-        ls[1].Status = 'Disqualified'; ls[1].Call_Disposition__c = 'Duplicate';
+        ls[1].Status = 'Disqualified'; ls[1].Call_Disposition__c = 'Already Enrolled Elsewhere';
+        ls[2].Status = 'Disqualified'; // no disposition at all -> still soft
+        // HARD-suppress -> NOT eligible
+        ls[3].Status = 'Disqualified'; ls[3].Call_Disposition__c = 'Duplicate';
+        ls[4].Status = 'Disqualified'; ls[4].Call_Disposition__c = 'Bad/Wrong Number';
+        ls[5].Status = 'Disqualified'; ls[5].Call_Disposition__c = 'Do Not Call';
+
         LeadTriggerHandler.handleBefore(ls, old);
-        System.assertEquals('None', ls[0].Current_Drip__c);
-        System.assertEquals(true, ls[0].Win_Back_Eligible__c, 'Not Interested is soft DQ');
-        System.assertEquals('None', ls[1].Current_Drip__c);
-        System.assertEquals(false, ls[1].Win_Back_Eligible__c, 'Duplicate is hard DQ');
+
+        System.assertEquals(true,  ls[0].Win_Back_Eligible__c, 'Not Interested is soft DQ');
+        System.assertEquals(true,  ls[1].Win_Back_Eligible__c, 'Already Enrolled Elsewhere is soft DQ');
+        System.assertEquals(true,  ls[2].Win_Back_Eligible__c, 'blank disposition is soft DQ');
+        System.assertEquals(false, ls[3].Win_Back_Eligible__c, 'Duplicate is hard-suppress');
+        System.assertEquals(false, ls[4].Win_Back_Eligible__c, 'Bad/Wrong Number is hard-suppress');
+        System.assertEquals(false, ls[5].Win_Back_Eligible__c, 'Do Not Call is hard-suppress');
+        for (Lead l : ls) System.assertEquals('None', l.Current_Drip__c, 'Disqualified exits any drip');
     }
 
     @isTest
@@ -203,5 +214,51 @@ private class LeadMarketingEngineTest {
         System.assertEquals(200, drips, 'all 200 entered Speed-to-Lead');
         Integer tasks = [SELECT COUNT() FROM Task WHERE Subject = 'Call now — new clear lead'];
         System.assertEquals(200, tasks, 'one call task per assigned lead');
+    }
+
+    // Bulk distribution to one office -> ONE per-office summary Slack post; a single assignment to another
+    // office in the same transaction -> a per-lead post. Every lead ALWAYS gets its own "call now" Task.
+    @isTest
+    static void bulkAssignSummaryVsSingle() {
+        Test.setMock(HttpCalloutMock.class, new SlackHttpMock(200, '{"ok":true}'));
+        List<Lead> ls = new List<Lead>();
+        for (Integer i = 0; i < 3; i++) {   // 3 to Tampa (bulk)
+            ls.add(new Lead(LastName='TPA'+i, Company='Co'+i, Status='New',
+                            Office__c='HFS_TPA', TCPA_Scrub_Status__c='Clear', SMS_Consent__c=true));
+        }
+        ls.add(new Lead(LastName='MIA0', Company='CoM', Status='New',   // 1 to Miami (single)
+                        Office__c='HFS_MIA', TCPA_Scrub_Status__c='Clear', SMS_Consent__c=true));
+        insert ls;
+        for (Lead l : ls) l.Status = 'Assigned';
+
+        Test.startTest();
+        update ls;   // one DML, mixed offices
+        Test.stopTest();
+
+        // Every assigned lead still gets its own call-now Task.
+        System.assertEquals(4, [SELECT COUNT() FROM Task WHERE Subject = 'Call now — new clear lead'],
+            'one call task per assigned lead, both paths');
+
+        // Slack decision: Tampa summarized (1 bulk note, count 3), Miami per-lead (1 single note).
+        List<SlackNotifier.Notification> notes = LeadTriggerHandler.lastNotes;
+        System.assertNotEquals(null, notes);
+        Integer bulkNotes = 0, singleNotes = 0, reported = 0;
+        for (SlackNotifier.Notification n : notes) {
+            if (n.kind == 'LEAD_ASSIGNED_BULK') { bulkNotes++; reported = n.leadCount; }
+            else if (n.kind == 'LEAD_ASSIGNED') { singleNotes++; }
+        }
+        System.assertEquals(1, bulkNotes, 'one per-office summary for the 3 Tampa leads');
+        System.assertEquals(3, reported, 'summary reports the office count');
+        System.assertEquals(1, singleNotes, 'one per-lead post for the single Miami assignment');
+    }
+
+    // The composed bulk summary reads "N new clear leads assigned to <Office> — top of queue".
+    @isTest
+    static void bulkSummaryMessageComposes() {
+        SlackNotifier.Notification n = new SlackNotifier.Notification();
+        n.kind = 'LEAD_ASSIGNED_BULK'; n.officeCode = 'HFS_TPA'; n.leadCount = 7;
+        String msg = new SlackNotifier(new List<SlackNotifier.Notification>{ n }).compose(n, 'Unassigned');
+        System.assert(msg.contains('7 new clear leads assigned to Tampa'), 'summary text: ' + msg);
+        System.assert(msg.contains('top of queue'), 'summary text: ' + msg);
     }
 }

@@ -6,7 +6,7 @@
 public with sharing class SlackNotifier implements Queueable, Database.AllowsCallouts {
 
     public class Notification {
-        public String kind;          // LEAD_ASSIGNED | LEAD_ENGAGED | LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
+        public String kind;          // LEAD_ASSIGNED | LEAD_ASSIGNED_BULK | LEAD_ENGAGED | LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
         public String officeCode;
         public String recordName;
         public String company;       // Lead
@@ -15,6 +15,7 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
         public Decimal hfsRevenue;   // Opp
         public Id ownerId;
         public String detail;        // e.g. engagement type for LEAD_ENGAGED
+        public Integer leadCount;    // LEAD_ASSIGNED_BULK: # leads assigned to the office this transaction
     }
 
     private List<Notification> items;
@@ -45,6 +46,10 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
         if (n.kind == 'LEAD_ASSIGNED') {
             return ':rotating_light: *New clear lead — call now* — ' + safe(n.company)
                 + ' · ' + safe(n.recordName) + ' · owner ' + owner;
+        }
+        if (n.kind == 'LEAD_ASSIGNED_BULK') {
+            return ':rotating_light: *' + n.leadCount + ' new clear leads assigned to '
+                + SlackService.officeLabel(n.officeCode) + ' — top of queue*';
         }
         if (n.kind == 'LEAD_ENGAGED') {
             String t = String.isBlank(n.detail) ? '' : ' (' + n.detail + ')';
