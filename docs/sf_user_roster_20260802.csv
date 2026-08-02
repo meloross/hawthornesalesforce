@@ -1,0 +1,24 @@
+﻿Id,Name,Username,Email,Profile.Name,UserType,IsActive
+005fn000006tyWLAAY,Automated Process,autoproc@00dfn00000iyozaeaf,noreply@00dfn00000iyozaeaf,,AutomatedProcess,true
+005fn000006vOGiAAM,Insights Integration,insightsintegration@00dfn00000iyozaeaf.ext,insightsintegration@00dfn00000iyozaeaf.ext,Sales Insights Integration User,Standard,true
+005fn000006tyWOAAY,Platform Integration User,cloud@00dfn00000iyozaeaf,noreply@00dfn00000iyozaeaf,,CloudIntegrationUser,true
+005fn000006tyUjAAI,Rahul Mittal,admin@hawthornefs.com,admin@hawthornefs.com,System Administrator,Standard,true
+005fn000006vOGhAAM,SalesforceIQ Integration,salesforceiqintegration@00dfn00000iyozaeaf.ext,salesforceiqintegration@00dfn00000iyozaeaf.ext,SalesforceIQ Integration User,Standard,true
+005fn000006wCDRAA2,Slackbot,slackbot@00dfn00000iyozaeaf.ext,slackbot@00dfn00000iyozaeaf.ext,,AutomatedProcess,true
+005fn000006vfZGAAY,Alex Russo,alex@hawthornefs.com.hfs,alex@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006tyWSAAY,Chatter Expert,chatty.00dfn00000iyozaeaf.deawp7azemz5@chatter.salesforce.com,noreply@example.com,Chatter Free User,CsnOnly,false
+005fn000006tyWNAAY,Exec Sponsor,execsponsor.d4mfunnxgo49.r41jzgvpllcp.vcqmvplq1iq4.aoua1v8g79su@example.com,noreply@example.com,End User,Standard,false
+005fn000006vfZJAAY,Garrett Wright,garrett@hawthornefs.com.hfs,garrett@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006wL8fAAE,Isabel Banks,isabel@hawthornefs.com.hfs,isabel@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZFAAY,James Longo,james@hawthornefs.com.hfs,james@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZHAAY,Jay Young,jay@hawthornefs.com.hfs,todd@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZQAAY,Kalyna Demchuk,kalyna@hawthornefs.com.hfs,kalyna@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZMAAY,Lianet Salinas,lianet@hawthornefs.com.hfs,lianet@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006wJjZAAU,Mar Mirza,mar@hawthornefs.com.hfs,mar@hawthornefs.com,System Administrator,Standard,false
+005fn000006vfZIAAY,Marcus Lanns,marcus@hawthornefs.com.hfs,marcus@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZNAAY,Miles Wilson,miles@hawthornefs.com.hfs,miles@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZLAAY,Raquel Melgares,raquel@hawthornefs.com.hfs,raquel@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZKAAY,Stephanie Carrera,stephanie@hawthornefs.com.hfs,stef@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vRT3AAM,Umar Mirza,mar@hawthornefs.com,mar@hawthornefs.com,Salesforce API Only System Integrations,Standard,false
+005fn000006vfZPAAY,Valicia McRoy,valicia@hawthornefs.com.hfs,valicia@hawthornefs.com,Minimum Access - Salesforce,Standard,false
+005fn000006vfZOAAY,Yessica Gonzalez,yessica@hawthornefs.com.hfs,yessica@hawthornefs.com,Minimum Access - Salesforce,Standard,false

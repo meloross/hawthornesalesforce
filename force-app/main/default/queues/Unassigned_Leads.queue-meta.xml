@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Queue xmlns="http://soap.sforce.com/2006/04/metadata">
+    <name>Unassigned Leads</name>
+    <doesSendEmailToMembers>false</doesSendEmailToMembers>
+    <queueMembers>
+        <users>
+            <user>alex@hawthornefs.com.hfs</user>
+            <user>garrett@hawthornefs.com.hfs</user>
+            <user>isabel@hawthornefs.com.hfs</user>
+            <user>james@hawthornefs.com.hfs</user>
+            <user>jay@hawthornefs.com.hfs</user>
+            <user>kalyna@hawthornefs.com.hfs</user>
+            <user>lianet@hawthornefs.com.hfs</user>
+            <user>marcus@hawthornefs.com.hfs</user>
+            <user>miles@hawthornefs.com.hfs</user>
+            <user>raquel@hawthornefs.com.hfs</user>
+            <user>stephanie@hawthornefs.com.hfs</user>
+            <user>valicia@hawthornefs.com.hfs</user>
+            <user>yessica@hawthornefs.com.hfs</user>
+        </users>
+    </queueMembers>
+    <queueSobject>
+        <sobjectType>Lead</sobjectType>
+    </queueSobject>
+</Queue>
