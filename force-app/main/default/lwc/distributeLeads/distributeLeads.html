@@ -1,0 +1,171 @@
+<template>
+    <lightning-card title="Distribute Leads" icon-name="standard:groups">
+        <lightning-button
+            slot="actions"
+            label="Refresh"
+            icon-name="utility:refresh"
+            onclick={handleRefresh}
+            disabled={loading}
+        ></lightning-button>
+
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <!-- error -->
+            <template if:true={error}>
+                <div class="slds-box slds-theme_error slds-m-bottom_small" role="alert">
+                    {error}
+                </div>
+            </template>
+
+            <!-- loading -->
+            <template if:true={loading}>
+                <lightning-spinner alternative-text="Scanning pool" size="small"></lightning-spinner>
+            </template>
+
+            <!-- scan banner -->
+            <template if:false={loading}>
+                <div class="slds-box slds-box_x-small slds-m-bottom_medium slds-text-align_center">
+                    <p class="slds-text-heading_large">{poolTotal}</p>
+                    <p class="slds-text-body_regular">
+                        cleared, un-allocated lead(s) waiting in the pool
+                    </p>
+                </div>
+
+                <!-- empty pool -->
+                <template if:true={poolIsEmpty}>
+                    <div class="slds-box slds-theme_shade slds-text-align_center">
+                        <p>No cleared leads are waiting right now. Leads land here after the TCPA scrub
+                            marks them <strong>Clear</strong>. Check back after a scrub run.</p>
+                    </div>
+                </template>
+
+                <!-- allocation form -->
+                <template if:false={poolIsEmpty}>
+                    <!-- confirm step hidden until reviewed -->
+                    <template if:false={confirming}>
+                        <lightning-radio-group
+                            name="mode"
+                            label="Allocate"
+                            options={modeOptions}
+                            value={mode}
+                            type="button"
+                            onchange={handleModeChange}
+                            class="slds-m-bottom_small"
+                        ></lightning-radio-group>
+
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col"><div class="slds-truncate">Office</div></th>
+                                    <th scope="col"><div class="slds-truncate">{inputLabel}</div></th>
+                                    <template if:true={isPercent}>
+                                        <th scope="col"><div class="slds-truncate">= leads</div></th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={officeRows} for:item="o">
+                                    <tr key={o.code}>
+                                        <td>
+                                            <div class="slds-truncate" title={o.label}>{o.label}</div>
+                                            <template if:true={o.disabled}>
+                                                <div class="slds-text-color_error slds-text-body_small">
+                                                    no queue configured
+                                                </div>
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <lightning-input
+                                                type="number"
+                                                label={inputLabel}
+                                                variant="label-hidden"
+                                                min="0"
+                                                step={inputStep}
+                                                value={o.value}
+                                                data-code={o.code}
+                                                disabled={o.disabled}
+                                                onchange={handleValueChange}
+                                            ></lightning-input>
+                                        </td>
+                                        <template if:true={o.showTarget}>
+                                            <td>
+                                                <div class="slds-text-align_right slds-p-top_x-small">{o.target}</div>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                        <div class="slds-m-top_small slds-text-body_regular">{sumLabel}</div>
+
+                        <template if:true={hasValidationError}>
+                            <div class="slds-text-color_error slds-m-top_x-small">{validationMessage}</div>
+                        </template>
+
+                        <div class="slds-m-top_medium">
+                            <lightning-button
+                                variant="brand"
+                                label="Distribute leads"
+                                onclick={handleReview}
+                                disabled={disableDistribute}
+                            ></lightning-button>
+                        </div>
+                    </template>
+
+                    <!-- confirmation -->
+                    <template if:true={confirming}>
+                        <div class="slds-box slds-theme_shade slds-m-bottom_small">
+                            <p class="slds-text-heading_small slds-m-bottom_x-small">Confirm distribution</p>
+                            <p class="slds-m-bottom_small">
+                                This will assign leads oldest-first and set each to <strong>Assigned</strong>
+                                (fires the call-now task &amp; office Slack alert). Unallocated leads stay in the pool.
+                            </p>
+                            <ul class="slds-list_dotted">
+                                <template for:each={plan} for:item="p">
+                                    <li key={p.code}>{p.label}: <strong>{p.target}</strong> lead(s)</li>
+                                </template>
+                            </ul>
+                        </div>
+                        <lightning-button
+                            variant="brand"
+                            label="Confirm & assign"
+                            onclick={handleConfirm}
+                            disabled={working}
+                            class="slds-m-right_x-small"
+                        ></lightning-button>
+                        <lightning-button
+                            label="Cancel"
+                            onclick={handleCancel}
+                            disabled={working}
+                        ></lightning-button>
+                        <template if:true={working}>
+                            <lightning-spinner alternative-text="Assigning" size="small"></lightning-spinner>
+                        </template>
+                    </template>
+                </template>
+            </template>
+
+            <!-- result -->
+            <template if:true={result}>
+                <div class="slds-m-top_medium">
+                    <div class={resultThemeClass} role="status">
+                        <p class="slds-text-heading_small slds-m-bottom_x-small">{result.message}</p>
+                        <template if:true={resultIsSuccess}>
+                            <ul class="slds-list_dotted">
+                                <template for:each={resultRows} for:item="r">
+                                    <li key={r.code}>{r.label}: <strong>{r.assigned}</strong> assigned
+                                        (of {r.target} requested)</li>
+                                </template>
+                            </ul>
+                        </template>
+                    </div>
+                    <lightning-button
+                        label="Dismiss"
+                        onclick={handleDismissResult}
+                        class="slds-m-top_x-small"
+                    ></lightning-button>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

@@ -151,14 +151,20 @@ public with sharing class LeadTriggerHandler {
     }
 
     private static Task newTask(Lead l, String subject) {
-        return new Task(
+        Task t = new Task(
             WhoId = l.Id,
-            OwnerId = l.OwnerId,
             Subject = subject,
             ActivityDate = Date.today(),
             Priority = 'High',
             Status = 'Not Started'
         );
+        // A Task cannot be owned by a queue. When a lead sits in an office queue after distribution
+        // (owner Id prefix 00G), leave OwnerId to default (the running user); only pin the task to the
+        // lead owner when that owner is an individual User (005) — e.g. a single real-time assignment.
+        if (l.OwnerId != null && String.valueOf(l.OwnerId).startsWith('005')) {
+            t.OwnerId = l.OwnerId;
+        }
+        return t;
     }
 
     private static SlackNotifier.Notification assignedSummaryNote(String officeCode, Integer cnt) {

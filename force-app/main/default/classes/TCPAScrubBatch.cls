@@ -99,10 +99,10 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
     public void finish(Database.BatchableContext bc) {
         System.debug('TCPAScrubBatch finished. processed=' + totalProcessed
             + ' clear=' + clearCount + ' dnc=' + dncCount + ' error=' + errorCount);
-        // Chain distribution so freshly-scrubbed Clear leads get allotted to offices immediately.
-        if (!Test.isRunningTest()) {
-            Database.executeBatch(new LeadDistributionBatch(), 200);
-        }
+        // DECOUPLED 2026-08-02: distribution is now manual/admin-controlled via the "Distribute Leads"
+        // tool (LeadDistributionManager). Cleared leads simply PARK in HFS_Lead_Pool (OwnerId set in
+        // execute() above) and wait for the admin to allocate them. The old auto-waterfall
+        // (LeadDistributionBatch) is retained but intentionally no longer auto-fires here.
     }
 
     private static Id poolQueueId() {
