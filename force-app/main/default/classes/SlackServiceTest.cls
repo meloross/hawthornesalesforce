@@ -2,11 +2,11 @@
 private class SlackServiceTest {
 
     @TestSetup static void seed() {
-        insert new Slack_Config__c(SetupOwnerId = UserInfo.getOrganizationId(), Bot_Token__c = 'xoxb-test-token');
+        insert new App_Secret__c(Name = 'Slack_Bot_Token', Secret_Value__c = 'xoxb-test-token');
     }
 
     @isTest static void postNoToken() {
-        delete [SELECT Id FROM Slack_Config__c];
+        delete [SELECT Id FROM App_Secret__c];
         SlackService.SlackResult r = SlackService.postMessage('C1', 'hi');
         System.assertEquals('no_token_configured', r.error, 'blank token short-circuits before callout');
         System.assertEquals(false, r.ok);

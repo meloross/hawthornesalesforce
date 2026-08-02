@@ -2,7 +2,7 @@
 private class SlackDigestTest {
 
     @TestSetup static void seed() {
-        insert new Slack_Config__c(SetupOwnerId = UserInfo.getOrganizationId(), Bot_Token__c = 'xoxb-test-token');
+        insert new App_Secret__c(Name = 'Slack_Bot_Token', Secret_Value__c = 'xoxb-test-token');
     }
 
     @isTest static void digestRunsAndPosts() {

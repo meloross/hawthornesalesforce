@@ -11,11 +11,21 @@ public with sharing class SlackService {
 
     public static final String ENDPOINT = 'https://slack.com/api';
 
-    /** Bot token from the org-default Slack_Config__c custom setting. Null/blank if not configured. */
+    @TestVisible
+    private static final String SLACK_TOKEN_NAME = 'Slack_Bot_Token';
+
+    /** Bot token from the secured App_Secret__c object. Read WITHOUT sharing so the callout works for
+     *  any running user (trigger/queueable/batch); FLS + Private sharing keep the value out of user reach. */
     @TestVisible
     private static String botToken() {
-        Slack_Config__c cfg = Slack_Config__c.getOrgDefaults();
-        return (cfg == null) ? null : cfg.Bot_Token__c;
+        return new SecretStore().read(SLACK_TOKEN_NAME);
+    }
+
+    private without sharing class SecretStore {
+        String read(String name) {
+            List<App_Secret__c> rows = [SELECT Secret_Value__c FROM App_Secret__c WHERE Name = :name LIMIT 1];
+            return rows.isEmpty() ? null : rows[0].Secret_Value__c;
+        }
     }
 
     public class SlackResult {
