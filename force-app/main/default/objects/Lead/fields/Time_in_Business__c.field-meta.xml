@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Time_in_Business__c</fullName>
+    <label>Time in Business</label>
+    <inlineHelpText>Time in business in years (migration casts from Close free text). If your source is too inconsistent to cast, this can be switched to Text.</inlineHelpText>
+    <precision>4</precision>
+    <required>false</required>
+    <scale>1</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
