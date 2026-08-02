@@ -51,6 +51,10 @@
         <enabled>true</enabled>
         <name>RunReports</name>
     </userPermissions>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>ViewEncryptedData</name>
+    </userPermissions>
     <objectPermissions>
         <object>Lead</object>
         <allowCreate>false</allowCreate>
@@ -198,6 +202,36 @@
     </fieldPermissions>
     <fieldPermissions>
         <field>Opportunity.HFS_Revenue__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.SSN__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.DOB__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Tax__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.SSN__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.DOB__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Contact.Tax__c</field>
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
