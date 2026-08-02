@@ -1,6 +1,17 @@
 @isTest
 private class SlackServiceTest {
 
+    @TestSetup static void seed() {
+        insert new Slack_Config__c(SetupOwnerId = UserInfo.getOrganizationId(), Bot_Token__c = 'xoxb-test-token');
+    }
+
+    @isTest static void postNoToken() {
+        delete [SELECT Id FROM Slack_Config__c];
+        SlackService.SlackResult r = SlackService.postMessage('C1', 'hi');
+        System.assertEquals('no_token_configured', r.error, 'blank token short-circuits before callout');
+        System.assertEquals(false, r.ok);
+    }
+
     @isTest static void postOk() {
         Test.setMock(HttpCalloutMock.class, new SlackHttpMock(200, '{"ok":true,"channel":"C1","ts":"1700000000.000100"}'));
         Test.startTest();

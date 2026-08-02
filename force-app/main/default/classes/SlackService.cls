@@ -1,13 +1,22 @@
 /**
  * SlackService — posts messages to Slack via the Slack Web API (chat.postMessage).
- * Auth via Named Credential callout:Slack_API; the Slack_API External Credential injects
- * "Authorization: Bearer <token>" (token held on the SlackBot Named Principal, entered in Setup).
+ * Auth: the bot token is held on the protected Slack_Config__c custom setting (data, never in git);
+ * this class sets "Authorization: Bearer <token>" directly on the request. The endpoint is called
+ * directly (allow-listed by the Slack_API remote site setting) — the External Credential path was
+ * abandoned because ext-cred credential injection would not resolve in this org.
  * Slack returns HTTP 200 even on logical errors, so we parse "ok" and capture "error"
  * (e.g. not_in_channel, channel_not_found, invalid_auth).
  */
 public with sharing class SlackService {
 
-    public static final String ENDPOINT = 'callout:Slack_API';
+    public static final String ENDPOINT = 'https://slack.com/api';
+
+    /** Bot token from the org-default Slack_Config__c custom setting. Null/blank if not configured. */
+    @TestVisible
+    private static String botToken() {
+        Slack_Config__c cfg = Slack_Config__c.getOrgDefaults();
+        return (cfg == null) ? null : cfg.Bot_Token__c;
+    }
 
     public class SlackResult {
         public Boolean ok = false;
@@ -34,6 +43,8 @@ public with sharing class SlackService {
         SlackResult r = new SlackResult();
         r.channel = channelId;
         if (String.isBlank(channelId)) { r.error = 'no_channel_configured'; return r; }
+        String token = botToken();
+        if (String.isBlank(token)) { r.error = 'no_token_configured'; return r; }
 
         Map<String, Object> body = new Map<String, Object>{
             'channel' => channelId,
@@ -43,6 +54,7 @@ public with sharing class SlackService {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(ENDPOINT + '/chat.postMessage');
         req.setMethod('POST');
+        req.setHeader('Authorization', 'Bearer ' + token);
         req.setHeader('Content-Type', 'application/json; charset=utf-8');
         req.setHeader('Accept', 'application/json');
         req.setTimeout(120000);

@@ -1,6 +1,10 @@
 @isTest
 private class SlackNotifierTest {
 
+    @TestSetup static void seed() {
+        insert new Slack_Config__c(SetupOwnerId = UserInfo.getOrganizationId(), Bot_Token__c = 'xoxb-test-token');
+    }
+
     @isTest static void leadQualifiedPosts() {
         Lead l = new Lead(LastName='Smith', Company='Acme', Status='New',
                           Office__c='HFS_TPA', TCPA_Scrub_Status__c='Clear');

@@ -1,6 +1,10 @@
 @isTest
 private class SlackDigestTest {
 
+    @TestSetup static void seed() {
+        insert new Slack_Config__c(SetupOwnerId = UserInfo.getOrganizationId(), Bot_Token__c = 'xoxb-test-token');
+    }
+
     @isTest static void digestRunsAndPosts() {
         Test.setMock(HttpCalloutMock.class, new SlackHttpMock(200, '{"ok":true}'));
         Account a = new Account(Name='Dig Acct');
