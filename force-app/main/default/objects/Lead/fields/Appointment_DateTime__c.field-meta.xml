@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Appointment_DateTime__c</fullName>
+    <label>Appointment Date/Time</label>
+    <description>Scheduled appointment date/time, set by the rep when they book. Anchor for the Appointment reminder marketing journey (read by Data Cloud). Not auto-populated — the rep enters the real booked time.</description>
+    <inlineHelpText>Set the actual scheduled appointment date and time when you book the appointment. Reminder messages are sent relative to this value.</inlineHelpText>
+    <required>false</required>
+    <type>DateTime</type>
+</CustomField>

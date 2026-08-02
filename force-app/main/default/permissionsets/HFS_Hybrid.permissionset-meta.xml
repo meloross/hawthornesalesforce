@@ -73,6 +73,11 @@
         <modifyAllRecords>false</modifyAllRecords>
     </objectPermissions>
     <fieldPermissions>
+        <field>Lead.Appointment_DateTime__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Lead.Office__c</field>
         <readable>true</readable>
         <editable>true</editable>
