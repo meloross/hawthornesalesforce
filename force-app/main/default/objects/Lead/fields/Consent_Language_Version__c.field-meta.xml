@@ -2,10 +2,8 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Consent_Language_Version__c</fullName>
     <label>Consent Language Version</label>
-    <inlineHelpText>Version identifier of the SMS/marketing consent language the lead agreed to on the website intake form (consent_language_version). Paired with SMS Consent + SMS Consent Timestamp for TCPA documentation.</inlineHelpText>
-    <externalId>false</externalId>
-    <length>100</length>
-    <required>false</required>
-    <type>Text</type>
-    <unique>false</unique>
+    <inlineHelpText>Full SMS/marketing consent disclosure the lead agreed to on the website intake form (consent_language_version) — e.g. Privacy Policy clause + checkbox opt-in text. Retained verbatim for TCPA proof, so widened to a Long Text Area.</inlineHelpText>
+    <type>LongTextArea</type>
+    <length>1000</length>
+    <visibleLines>5</visibleLines>
 </CustomField>
