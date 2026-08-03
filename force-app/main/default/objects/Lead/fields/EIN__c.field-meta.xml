@@ -3,7 +3,7 @@
     <fullName>EIN__c</fullName>
     <label>EIN</label>
     <externalId>false</externalId>
-    <length>20</length>
+    <length>50</length>
     <required>false</required>
     <type>Text</type>
     <unique>false</unique>

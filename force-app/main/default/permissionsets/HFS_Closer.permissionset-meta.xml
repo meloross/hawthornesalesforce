@@ -83,6 +83,16 @@
         <editable>false</editable>
     </fieldPermissions>
     <fieldPermissions>
+        <field>Lead.File_ID__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Lead_Source_Tag__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
         <field>Lead.Office__c</field>
         <readable>true</readable>
         <editable>false</editable>

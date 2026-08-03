@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>File_ID__c</fullName>
+    <label>File ID</label>
+    <inlineHelpText>Batch / provenance ID for the load this lead came in on (e.g. KLV-2025-08). Set by the data load; traces a lead to its source batch.</inlineHelpText>
+    <externalId>false</externalId>
+    <length>30</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
