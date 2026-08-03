@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_MCA_Debt_Range__c</fullName>
     <label>Total MCA Debt Range</label>
-    <inlineHelpText>Total existing MCA/advance debt bucket captured on the website intake form (total_mca_debt). Range, not an exact figure — the exact figure lives on Debt Amount.</inlineHelpText>
+    <inlineHelpText>Total existing MCA/advance debt bucket captured on the website intake form (total_mca_debt). Values match the website form's dropdown options exactly. Non-restricted so an off-list value never blocks lead creation.</inlineHelpText>
     <required>false</required>
     <type>Picklist</type>
     <valueSet>
@@ -10,39 +10,34 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>None</fullName>
+                <fullName>$10K – $50K</fullName>
                 <default>false</default>
-                <label>None</label>
+                <label>$10K – $50K</label>
             </value>
             <value>
-                <fullName>Under $25K</fullName>
+                <fullName>$50K – $100K</fullName>
                 <default>false</default>
-                <label>Under $25K</label>
+                <label>$50K – $100K</label>
             </value>
             <value>
-                <fullName>$25K-$50K</fullName>
+                <fullName>$100K – $250K</fullName>
                 <default>false</default>
-                <label>$25K-$50K</label>
+                <label>$100K – $250K</label>
             </value>
             <value>
-                <fullName>$50K-$100K</fullName>
+                <fullName>$250K – $500K</fullName>
                 <default>false</default>
-                <label>$50K-$100K</label>
+                <label>$250K – $500K</label>
             </value>
             <value>
-                <fullName>$100K-$250K</fullName>
+                <fullName>$500K – $1M</fullName>
                 <default>false</default>
-                <label>$100K-$250K</label>
+                <label>$500K – $1M</label>
             </value>
             <value>
-                <fullName>$250K-$500K</fullName>
+                <fullName>$1M+</fullName>
                 <default>false</default>
-                <label>$250K-$500K</label>
-            </value>
-            <value>
-                <fullName>$500K+</fullName>
-                <default>false</default>
-                <label>$500K+</label>
+                <label>$1M+</label>
             </value>
         </valueSetDefinition>
     </valueSet>

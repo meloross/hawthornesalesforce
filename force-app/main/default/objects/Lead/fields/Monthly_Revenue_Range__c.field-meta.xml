@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Monthly_Revenue_Range__c</fullName>
     <label>Monthly Revenue Range</label>
-    <inlineHelpText>Monthly gross revenue bucket captured on the website intake form (business_email/monthly_revenue). Range, not an exact figure — the exact figure lives on Monthly Revenue.</inlineHelpText>
+    <inlineHelpText>Monthly gross revenue bucket captured on the website intake form (monthly_revenue). Values match the website form's dropdown options exactly. Non-restricted so an off-list value never blocks lead creation.</inlineHelpText>
     <required>false</required>
     <type>Picklist</type>
     <valueSet>
@@ -10,29 +10,24 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>Under $10K</fullName>
+                <fullName>$10K – $25K</fullName>
                 <default>false</default>
-                <label>Under $10K</label>
+                <label>$10K – $25K</label>
             </value>
             <value>
-                <fullName>$10K-$25K</fullName>
+                <fullName>$25K – $50K</fullName>
                 <default>false</default>
-                <label>$10K-$25K</label>
+                <label>$25K – $50K</label>
             </value>
             <value>
-                <fullName>$25K-$50K</fullName>
+                <fullName>$50K – $100K</fullName>
                 <default>false</default>
-                <label>$25K-$50K</label>
+                <label>$50K – $100K</label>
             </value>
             <value>
-                <fullName>$50K-$100K</fullName>
+                <fullName>$100K – $250K</fullName>
                 <default>false</default>
-                <label>$50K-$100K</label>
-            </value>
-            <value>
-                <fullName>$100K-$250K</fullName>
-                <default>false</default>
-                <label>$100K-$250K</label>
+                <label>$100K – $250K</label>
             </value>
             <value>
                 <fullName>$250K+</fullName>
