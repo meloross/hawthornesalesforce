@@ -107,7 +107,7 @@ public with sharing class LeadTriggerHandler {
                     websiteNew.add(l);
                 }
             }
-            if (!websiteNew.isEmpty()) assignWebsiteRoundRobin(websiteNew);
+            if (!websiteNew.isEmpty()) assignRoundRobin(websiteNew);
         }
     }
 
@@ -262,14 +262,16 @@ public with sharing class LeadTriggerHandler {
         return ordered;
     }
 
-    /** Round-robin OwnerId across the active rep set, keyed on the cumulative website-lead count so the
-     *  rotation advances across transactions. No eligible reps -> leave owner as-is (never drop a lead). */
-    private static void assignWebsiteRoundRobin(List<Lead> websiteNew) {
+    /** Round-robin OwnerId across the active rep set, keyed on the cumulative inbound-lead count so the
+     *  rotation advances across transactions. No eligible reps -> leave owner as-is (never drop a lead).
+     *  Assigns a rep to EVERY lead passed — the caller decides which leads need (re)assignment.
+     *  Reused by the website-intake trigger and the Kloudi inbound-SMS webhook. */
+    public static void assignRoundRobin(List<Lead> leads) {
         List<Id> reps = roundRobinReps();
         if (reps.isEmpty()) return;
-        Integer base = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Website'];
+        Integer base = [SELECT COUNT() FROM Lead WHERE LeadSource IN ('Website', 'Kloudi SMS')];
         Integer i = 0;
-        for (Lead l : websiteNew) {
+        for (Lead l : leads) {
             l.OwnerId = reps[Math.mod(base + i, reps.size())];
             i++;
         }
@@ -300,6 +302,12 @@ public with sharing class LeadTriggerHandler {
             }
         }
         return repOfficeCache;
+    }
+
+    /** Office code for a rep (office-queue member); null if the user is in no office queue.
+     *  Reused by the Kloudi inbound-SMS webhook to route its Slack alert to the owner's office channel. */
+    public static String officeForUser(Id userId) {
+        return repOfficeMap().get(userId);
     }
 
     /** "🌐 New website lead — {Name} · {business} · owner {Owner}", routed to the assigned rep's office channel. */
