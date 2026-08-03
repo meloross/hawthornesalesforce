@@ -577,6 +577,31 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Monthly_Revenue_Range__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Total_MCA_Debt_Range__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Consent_Language_Version__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Website_Submitted_At__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Additional_Details__c</field>
+        <readable>true</readable>
+        <editable>true</editable>
+    </fieldPermissions>
     <userPermissions>
         <enabled>true</enabled>
         <name>ViewEncryptedData</name>

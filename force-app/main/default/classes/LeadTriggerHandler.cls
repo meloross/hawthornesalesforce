@@ -93,6 +93,22 @@ public with sharing class LeadTriggerHandler {
                 if (String.isBlank(l.SMS_Opt_Out_Source__c)) l.SMS_Opt_Out_Source__c = 'System';
             }
         }
+
+        // ----- Website intake (insert only): ensure New/Pending, stamp consent source, round-robin to a rep -----
+        // Website leads arrive from Base44's Salesforce connector with LeadSource='Website'. They are NOT
+        // office-distributed — each is round-robined to an active rep (owner set here in before-insert).
+        if (oldMap == null) {
+            List<Lead> websiteNew = new List<Lead>();
+            for (Lead l : news) {
+                if (l.LeadSource == 'Website') {
+                    if (String.isBlank(l.Status)) l.Status = 'New';
+                    if (String.isBlank(l.TCPA_Scrub_Status__c)) l.TCPA_Scrub_Status__c = 'Pending';
+                    if (l.SMS_Consent__c == true && String.isBlank(l.SMS_Consent_Source__c)) l.SMS_Consent_Source__c = 'Web Form';
+                    websiteNew.add(l);
+                }
+            }
+            if (!websiteNew.isEmpty()) assignWebsiteRoundRobin(websiteNew);
+        }
     }
 
     // ---------- AFTER: tasks + Slack ----------
@@ -149,6 +165,14 @@ public with sharing class LeadTriggerHandler {
                 SlackTriggerState.engagementActioned.add(l.Id);
                 tasks.add(newTask(l, 'Lead replied — respond'));
                 notes.add(leadNote('LEAD_REPLIED', l, l.Last_Engagement_Type__c));
+            }
+
+            // Website intake lead (insert): office-routed Slack alert + a call task for the round-robin rep.
+            if (oldMap == null && l.LeadSource == 'Website'
+                    && !SlackTriggerState.websiteActioned.contains(l.Id)) {
+                SlackTriggerState.websiteActioned.add(l.Id);
+                tasks.add(newTask(l, 'New website lead — call'));
+                notes.add(websiteNote(l));
             }
         }
 
@@ -213,6 +237,79 @@ public with sharing class LeadTriggerHandler {
         n.company = l.Company;
         n.ownerId = l.OwnerId;
         n.detail = detail;
+        return n;
+    }
+
+    // ---------- Website intake: round-robin + office-routed alert ----------
+
+    @TestVisible private static List<Id> repsOverride;        // tests inject a deterministic rep list
+    private static List<Id> cachedRoundRobinReps;
+
+    /** Active reps eligible for website round-robin = users holding HFS_Hybrid or HFS_Opener (the tiers that
+     *  can own and work a Lead), ordered by name for a stable rotation. Cached per transaction. */
+    private static List<Id> roundRobinReps() {
+        if (repsOverride != null) return repsOverride;
+        if (cachedRoundRobinReps != null) return cachedRoundRobinReps;
+        Set<Id> ids = new Set<Id>();
+        for (PermissionSetAssignment psa : [
+                SELECT AssigneeId FROM PermissionSetAssignment
+                WHERE PermissionSet.Name IN ('HFS_Hybrid', 'HFS_Opener') AND Assignee.IsActive = true]) {
+            ids.add(psa.AssigneeId);
+        }
+        List<Id> ordered = new List<Id>();
+        for (User u : [SELECT Id FROM User WHERE Id IN :ids ORDER BY Name]) ordered.add(u.Id);
+        cachedRoundRobinReps = ordered;
+        return ordered;
+    }
+
+    /** Round-robin OwnerId across the active rep set, keyed on the cumulative website-lead count so the
+     *  rotation advances across transactions. No eligible reps -> leave owner as-is (never drop a lead). */
+    private static void assignWebsiteRoundRobin(List<Lead> websiteNew) {
+        List<Id> reps = roundRobinReps();
+        if (reps.isEmpty()) return;
+        Integer base = [SELECT COUNT() FROM Lead WHERE LeadSource = 'Website'];
+        Integer i = 0;
+        for (Lead l : websiteNew) {
+            l.OwnerId = reps[Math.mod(base + i, reps.size())];
+            i++;
+        }
+    }
+
+    // Office lead-queue DeveloperName -> Office__c code, to route a website alert to the assigned rep's office channel.
+    private static final Map<String, String> QUEUE_TO_OFFICE = new Map<String, String>{
+        'Tampa_Leads' => 'HFS_TPA', 'Miami_Leads' => 'HFS_MIA',
+        'New_Jersey_Leads' => 'HFS_NJ', 'New_York_Leads' => 'HFS_NY'
+    };
+    private static Map<Id, String> repOfficeCache;
+
+    /** rep (office-queue member) -> office code, built from the 4 office queues' membership. Cached per transaction. */
+    private static Map<Id, String> repOfficeMap() {
+        if (repOfficeCache != null) return repOfficeCache;
+        repOfficeCache = new Map<Id, String>();
+        Map<Id, String> groupIdToOffice = new Map<Id, String>();
+        for (Group g : [SELECT Id, DeveloperName FROM Group
+                        WHERE Type = 'Queue' AND DeveloperName IN :QUEUE_TO_OFFICE.keySet()]) {
+            groupIdToOffice.put(g.Id, QUEUE_TO_OFFICE.get(g.DeveloperName));
+        }
+        if (!groupIdToOffice.isEmpty()) {
+            for (GroupMember gm : [SELECT GroupId, UserOrGroupId FROM GroupMember
+                                   WHERE GroupId IN :groupIdToOffice.keySet()]) {
+                if (String.valueOf(gm.UserOrGroupId).startsWith('005')) {
+                    repOfficeCache.put(gm.UserOrGroupId, groupIdToOffice.get(gm.GroupId));
+                }
+            }
+        }
+        return repOfficeCache;
+    }
+
+    /** "🌐 New website lead — {Name} · {business} · owner {Owner}", routed to the assigned rep's office channel. */
+    private static SlackNotifier.Notification websiteNote(Lead l) {
+        SlackNotifier.Notification n = new SlackNotifier.Notification();
+        n.kind = 'LEAD_WEBSITE';
+        n.officeCode = repOfficeMap().get(l.OwnerId);   // null -> SlackNotifier skips the post (task still created)
+        n.recordName = l.Name;
+        n.company = l.Company;
+        n.ownerId = l.OwnerId;
         return n;
     }
 }

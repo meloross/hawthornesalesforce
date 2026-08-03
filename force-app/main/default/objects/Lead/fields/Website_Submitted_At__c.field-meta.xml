@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Website_Submitted_At__c</fullName>
+    <label>Website Submitted At</label>
+    <inlineHelpText>Timestamp the lead submitted the website intake form (submitted_at). Distinct from Created Date, which is when Salesforce received the record.</inlineHelpText>
+    <required>false</required>
+    <type>DateTime</type>
+</CustomField>

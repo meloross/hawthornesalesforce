@@ -6,7 +6,7 @@
 public with sharing class SlackNotifier implements Queueable, Database.AllowsCallouts {
 
     public class Notification {
-        public String kind;          // LEAD_ASSIGNED | LEAD_ASSIGNED_BULK | LEAD_ENGAGED | LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
+        public String kind;          // LEAD_WEBSITE | LEAD_ASSIGNED | LEAD_ASSIGNED_BULK | LEAD_ENGAGED | LEAD_REPLIED | LEAD_QUALIFIED | LEAD_APPT | OPP_NEW | OPP_STAGE | OPP_WON
         public String officeCode;
         public String recordName;
         public String company;       // Lead
@@ -43,6 +43,10 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
 
     @TestVisible
     private String compose(Notification n, String owner) {
+        if (n.kind == 'LEAD_WEBSITE') {
+            return ':globe_with_meridians: *New website lead* — ' + safe(n.recordName)
+                + ' · ' + safe(n.company) + ' · owner ' + owner;
+        }
         if (n.kind == 'LEAD_ASSIGNED') {
             return ':rotating_light: *New clear lead — call now* — ' + safe(n.company)
                 + ' · ' + safe(n.recordName) + ' · owner ' + owner;

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_MCA_Debt_Range__c</fullName>
+    <label>Total MCA Debt Range</label>
+    <inlineHelpText>Total existing MCA/advance debt bucket captured on the website intake form (total_mca_debt). Range, not an exact figure — the exact figure lives on Debt Amount.</inlineHelpText>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>None</fullName>
+                <default>false</default>
+                <label>None</label>
+            </value>
+            <value>
+                <fullName>Under $25K</fullName>
+                <default>false</default>
+                <label>Under $25K</label>
+            </value>
+            <value>
+                <fullName>$25K-$50K</fullName>
+                <default>false</default>
+                <label>$25K-$50K</label>
+            </value>
+            <value>
+                <fullName>$50K-$100K</fullName>
+                <default>false</default>
+                <label>$50K-$100K</label>
+            </value>
+            <value>
+                <fullName>$100K-$250K</fullName>
+                <default>false</default>
+                <label>$100K-$250K</label>
+            </value>
+            <value>
+                <fullName>$250K-$500K</fullName>
+                <default>false</default>
+                <label>$250K-$500K</label>
+            </value>
+            <value>
+                <fullName>$500K+</fullName>
+                <default>false</default>
+                <label>$500K+</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
