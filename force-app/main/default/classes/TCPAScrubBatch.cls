@@ -9,8 +9,35 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
     public Integer clearCount = 0;
     public Integer dncCount = 0;
     public Integer errorCount = 0;
+    public Decimal totalScrubPrice = 0;   // credit burn = sum of response meta.scrub_price across chunks
+    public Decimal totalCoinsPrice = 0;   // sum of response meta.coins_price across chunks
+
+    // Optional cap for a BOUNDED run (e.g. a pilot). null = the full Pending set.
+    @TestVisible private Integer maxLeads;
+    @TestVisible private String fileId;   // optional File_ID__c cohort filter (bounded pilot)
+    public TCPAScrubBatch() {}
+    public TCPAScrubBatch(Integer maxLeads) { this.maxLeads = maxLeads; }
+    public TCPAScrubBatch(String fileId, Integer maxLeads) { this.fileId = fileId; this.maxLeads = maxLeads; }
 
     public Database.QueryLocator start(Database.BatchableContext bc) {
+        if (String.isNotBlank(fileId) && maxLeads != null) {
+            return Database.getQueryLocator([
+                SELECT Id, Phone, TCPA_Scrub_Status__c
+                FROM Lead
+                WHERE TCPA_Scrub_Status__c = 'Pending' AND Phone != null AND File_ID__c = :fileId
+                ORDER BY CreatedDate ASC
+                LIMIT :maxLeads
+            ]);
+        }
+        if (maxLeads != null) {
+            return Database.getQueryLocator([
+                SELECT Id, Phone, TCPA_Scrub_Status__c
+                FROM Lead
+                WHERE TCPA_Scrub_Status__c = 'Pending' AND Phone != null
+                ORDER BY CreatedDate ASC
+                LIMIT :maxLeads
+            ]);
+        }
         return Database.getQueryLocator([
             SELECT Id, Phone, TCPA_Scrub_Status__c
             FROM Lead
@@ -33,6 +60,7 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
         } catch (Exception e) {
             results = new Map<String, TCPAScrubService.ScrubResult>();
         }
+        accumulateBurn(results);   // sum meta.scrub_price / coins_price for this chunk
 
         List<Lead> toUpdate = new List<Lead>();
         List<Compliance_Scrub_Log__c> logs = new List<Compliance_Scrub_Log__c>();
@@ -60,7 +88,7 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
                 if (r != null) {
                     log.Matched_Lists__c = truncate(r.errorMessage, 255);
                     log.Phone_Type__c = r.phoneType;
-                    log.Raw_Response__c = r.rawResponse;
+                    log.Raw_Response__c = truncate(r.rawResponse, 2000);   // compact; field max 32768, mass body is far larger
                 }
                 errorCount++;
             } else {
@@ -79,7 +107,7 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
                 log.Is_Bad_Number__c = isBad;
                 log.Matched_Lists__c = truncate(r.status, 255);
                 log.Phone_Type__c = r.phoneType;
-                log.Raw_Response__c = r.rawResponse;
+                log.Raw_Response__c = truncate(r.rawResponse, 2000);
             }
 
             l.TCPA_Scrub_Status__c = status;
@@ -96,9 +124,36 @@ public with sharing class TCPAScrubBatch implements Database.Batchable<sObject>,
         if (!logs.isEmpty()) insert logs;
     }
 
+    /** Sum meta.scrub_price / coins_price from a chunk's response (the body is shared across the chunk). */
+    private void accumulateBurn(Map<String, TCPAScrubService.ScrubResult> results) {
+        if (results == null || results.isEmpty()) return;
+        String raw;
+        for (TCPAScrubService.ScrubResult r : results.values()) {
+            if (r != null && r.rawResponse != null) { raw = r.rawResponse; break; }
+        }
+        if (raw == null) return;
+        try {
+            Object parsed = JSON.deserializeUntyped(raw);
+            if (parsed instanceof Map<String, Object>) {
+                Object metaObj = ((Map<String, Object>) parsed).get('meta');
+                if (metaObj instanceof Map<String, Object>) {
+                    Map<String, Object> meta = (Map<String, Object>) metaObj;
+                    totalScrubPrice += toDecimal(meta.get('scrub_price'));
+                    totalCoinsPrice += toDecimal(meta.get('coins_price'));
+                }
+            }
+        } catch (Exception e) { /* meta is best-effort; never fail the scrub over accounting */ }
+    }
+
+    private static Decimal toDecimal(Object o) {
+        if (o == null) return 0;
+        try { return Decimal.valueOf(String.valueOf(o)); } catch (Exception e) { return 0; }
+    }
+
     public void finish(Database.BatchableContext bc) {
         System.debug('TCPAScrubBatch finished. processed=' + totalProcessed
-            + ' clear=' + clearCount + ' dnc=' + dncCount + ' error=' + errorCount);
+            + ' clear=' + clearCount + ' dnc=' + dncCount + ' error=' + errorCount
+            + ' scrubPrice=' + totalScrubPrice + ' coinsPrice=' + totalCoinsPrice);
         // DECOUPLED 2026-08-02: distribution is now manual/admin-controlled via the "Distribute Leads"
         // tool (LeadDistributionManager). Cleared leads simply PARK in HFS_Lead_Pool (OwnerId set in
         // execute() above) and wait for the admin to allocate them. The old auto-waterfall

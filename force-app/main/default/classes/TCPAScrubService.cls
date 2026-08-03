@@ -31,7 +31,18 @@ public with sharing class TCPAScrubService {
         return String.isBlank(digits) ? null : digits;
     }
 
-    /** Mass scrub. POST /scrub/phones/ with phones (digits), type=all, small_list=true. */
+    /**
+     * Mass scrub. POST /scrub/phones/ with phones (digits), type=all, small_list=true.
+     *
+     * REAL mass response shape (confirmed from pilot log, Job_Key 707fn00000rh09vAAA) — NOT the
+     * single-endpoint "results" shape:
+     *   { "meta":{...}, "match_statistics":[...], "match":[ {phone_number,status,...} ], "clean":{ "<phone>":{...} } }
+     *   - phone present under top-level "clean"    -> Clear
+     *   - phone present in the top-level "match" array -> Do Not Contact
+     *   - phone in NEITHER                          -> Error (safe default; absence never becomes Clear)
+     * Response keys carry a leading 1 (11-digit, e.g. "19125062784") while the sent digits may be
+     * 10-digit, so ALL matching is done on the last 10 digits (see last10()).
+     */
     public static Map<String, ScrubResult> scrubPhones(List<String> phones) {
         Map<String, ScrubResult> out = new Map<String, ScrubResult>();
         List<String> digits = new List<String>();
@@ -61,6 +72,9 @@ public with sharing class TCPAScrubService {
             return out;
         }
 
+        // Index the response by last-10-digits: clean phones -> Clear; match phones -> DNC node.
+        Set<String> cleanByLast10 = new Set<String>();
+        Map<String, Map<String, Object>> matchByLast10 = new Map<String, Map<String, Object>>();
         try {
             Map<String, Object> top = (Map<String, Object>) JSON.deserializeUntyped(raw);
             // Top-level vendor error (e.g. {"error":"You do not have enough credits"}) -> every phone Error.
@@ -69,39 +83,120 @@ public with sharing class TCPAScrubService {
                 for (String d : digits) { out.put(d, errorResult(d, em, raw)); }
                 return out;
             }
-            Object results = top.get('results');
-            if (results instanceof Map<String, Object>) {
-                Map<String, Object> rm = (Map<String, Object>) results;
-                Boolean singleShape = rm.containsKey('clean') || rm.containsKey('is_bad_number');
-                if (singleShape && digits.size() == 1) {
-                    out.put(digits[0], parseNode(digits[0], rm, raw));
-                } else {
-                    for (String key : rm.keySet()) {
-                        if (rm.get(key) instanceof Map<String, Object>) {
-                            String ph = normalize(key);
-                            if (ph != null) out.put(ph, parseNode(ph, (Map<String, Object>) rm.get(key), raw));
-                        }
-                    }
-                }
-            } else if (results instanceof List<Object>) {
-                for (Object o : (List<Object>) results) {
-                    if (o instanceof Map<String, Object>) {
-                        Map<String, Object> m = (Map<String, Object>) o;
-                        String ph = normalize(String.valueOf(m.get('phone')));
-                        if (ph != null) out.put(ph, parseNode(ph, m, raw));
-                    }
-                }
-            }
+            indexClean(top.get('clean'), cleanByLast10);
+            indexMatch(top.get('match'), matchByLast10);
         } catch (Exception e) {
             for (String d : digits) { out.put(d, errorResult(d, 'Parse error: ' + e.getMessage(), raw)); }
             return out;
         }
 
-        // Any requested digit with no result -> Error
         for (String d : digits) {
-            if (!out.containsKey(d)) out.put(d, errorResult(d, 'No result returned for phone', raw));
+            String key = last10(d);
+            if (key != null && matchByLast10.containsKey(key)) {
+                out.put(d, matchNode(d, matchByLast10.get(key), raw));   // in "match" => Do Not Contact
+            } else if (key != null && cleanByLast10.contains(key)) {
+                out.put(d, cleanNode(d, raw));                            // in "clean" => Clear
+            } else {
+                out.put(d, errorResult(d, 'No result returned for phone', raw));  // absent => Error
+            }
         }
         return out;
+    }
+
+    /** Canonical phone key = last 10 digits (strips an optional leading 1 / country code on either side). */
+    @TestVisible
+    private static String last10(String phone) {
+        if (phone == null) return null;
+        String d = phone.replaceAll('[^0-9]', '');
+        if (String.isBlank(d)) return null;
+        return (d.length() > 10) ? d.substring(d.length() - 10) : d;
+    }
+
+    /** Top-level "clean" is a map keyed by phone (values like {"phone_number":..}); tolerate a list too. */
+    private static void indexClean(Object cleanObj, Set<String> sink) {
+        if (cleanObj instanceof Map<String, Object>) {
+            Map<String, Object> cm = (Map<String, Object>) cleanObj;
+            for (String k : cm.keySet()) {
+                String key = last10(k);                              // the map key is normally the phone
+                if (key == null) key = last10(extractPhone(cm.get(k)));
+                if (key != null) sink.add(key);
+            }
+        } else if (cleanObj instanceof List<Object>) {
+            for (Object el : (List<Object>) cleanObj) {
+                String key = last10(extractPhone(el));
+                if (key != null) sink.add(key);
+            }
+        }
+    }
+
+    /** Top-level "match" is an array of litigator/DNC hits; tolerate a phone-keyed map too. */
+    private static void indexMatch(Object matchObj, Map<String, Map<String, Object>> sink) {
+        if (matchObj instanceof List<Object>) {
+            for (Object el : (List<Object>) matchObj) { addMatch(el, sink); }
+        } else if (matchObj instanceof Map<String, Object>) {
+            Map<String, Object> mm = (Map<String, Object>) matchObj;
+            for (String k : mm.keySet()) {
+                Object node = mm.get(k);
+                String key = last10(k);                              // key may itself be the phone
+                if (key != null) {
+                    sink.put(key, (node instanceof Map<String, Object>)
+                        ? (Map<String, Object>) node : new Map<String, Object>());
+                } else {
+                    addMatch(node, sink);
+                }
+            }
+        }
+    }
+
+    private static void addMatch(Object el, Map<String, Map<String, Object>> sink) {
+        String key = last10(extractPhone(el));
+        if (key == null) return;
+        sink.put(key, (el instanceof Map<String, Object>) ? (Map<String, Object>) el : new Map<String, Object>());
+    }
+
+    /** Pull a phone from an element: phone_number/phone/number field on a map, else digits of a scalar. */
+    private static String extractPhone(Object el) {
+        if (el instanceof Map<String, Object>) {
+            Map<String, Object> m = (Map<String, Object>) el;
+            for (String k : new List<String>{'phone_number', 'phone', 'number'}) {
+                if (m.get(k) != null) {
+                    String d = normalize(String.valueOf(m.get(k)));
+                    if (d != null) return d;
+                }
+            }
+            return null;
+        }
+        return (el != null) ? normalize(String.valueOf(el)) : null;
+    }
+
+    /** Phone found under "clean" => clean=true (Clear). */
+    private static ScrubResult cleanNode(String phone, String raw) {
+        ScrubResult r = new ScrubResult();
+        r.phone = phone;
+        r.rawResponse = raw;
+        r.clean = true;
+        r.isBadNumber = false;
+        r.isError = false;
+        return r;
+    }
+
+    /** Phone found in "match" => not clean (Do Not Contact); carry status/status_array/type/bad defensively. */
+    private static ScrubResult matchNode(String phone, Map<String, Object> m, String raw) {
+        ScrubResult r = new ScrubResult();
+        r.phone = phone;
+        r.rawResponse = raw;
+        r.clean = false;          // present in "match" => litigator/DNC hit => never Clear
+        r.isError = false;
+        if (m != null) {
+            Object bad = m.get('is_bad_number');
+            r.isBadNumber = (bad != null) && (String.valueOf(bad) == 'true' || String.valueOf(bad) == '1');
+            if (m.get('status') != null) r.status = String.valueOf(m.get('status'));
+            if (m.get('phone_type') != null) r.phoneType = String.valueOf(m.get('phone_type'));
+            if (m.get('status_array') instanceof List<Object>) {
+                for (Object s : (List<Object>) m.get('status_array')) r.statusArray.add(String.valueOf(s));
+            }
+        }
+        return r;
     }
 
     /** Single scrub. POST /scrub/phone/ — used for the one-number sanity test. */

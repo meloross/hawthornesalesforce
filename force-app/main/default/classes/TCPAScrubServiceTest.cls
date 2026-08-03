@@ -45,30 +45,65 @@ private class TCPAScrubServiceTest {
         System.assertEquals('mobile', r.phoneType);
     }
 
-    @isTest static void testMassPhoneKeyed() {
-        String body = '{"results":{"5551230001":{"clean":1,"is_bad_number":false},"5551230002":{"clean":0,"is_bad_number":true,"status":"TCPA"}}}';
+    // Real mass shape: top-level "clean" map (good) + "match" array (DNC); response keys carry a leading 1.
+    @isTest static void testMassCleanAndMatch() {
+        String body = '{"meta":{"scrub_price":2,"coins_price":0},"match_statistics":[],'
+            + '"match":[{"phone_number":"15551230002","status":"TCPA | Federal DNC","status_array":["tcpa","federal_dnc"],"is_bad_number":true,"phone_type":"mobile"}],'
+            + '"clean":{"15551230001":{"phone_number":"15551230001"}}}';
         Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, body));
         Test.startTest();
         Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'555-123-0001','(555) 123-0002'});
         Test.stopTest();
-        System.assertEquals(true, res.get('5551230001').clean);
-        System.assertEquals(true, res.get('5551230002').isBadNumber);
+        // Sent 10-digit; response 11-digit -> matched on last 10 digits.
+        TCPAScrubService.ScrubResult cleanRes = res.get('5551230001');
+        System.assertEquals(true, cleanRes.clean, 'phone under "clean" => Clear');
+        System.assertEquals(false, cleanRes.isError);
+        TCPAScrubService.ScrubResult dnc = res.get('5551230002');
+        System.assertEquals(false, dnc.clean, 'phone in "match" => not clean');
+        System.assertEquals(false, dnc.isError);
+        System.assertEquals(true, dnc.isBadNumber);
+        System.assertEquals('TCPA | Federal DNC', dnc.status);
+        System.assertEquals(2, dnc.statusArray.size());
+        System.assertEquals('mobile', dnc.phoneType);
     }
 
-    @isTest static void testMassSingleShape() {
-        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":{"clean":1,"is_bad_number":false}}'));
+    // A single clean phone; sent digits match a clean key of equal length.
+    @isTest static void testMassCleanSingle() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"clean":{"5551230099":{"phone_number":"5551230099"}},"match":[]}'));
         Test.startTest();
         Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'5551230099'});
         Test.stopTest();
         System.assertEquals(true, res.get('5551230099').clean);
+        System.assertEquals(false, res.get('5551230099').isError);
     }
 
-    @isTest static void testMassListShape() {
-        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"results":[{"phone":"5551230077","clean":1,"is_bad_number":false}]}'));
+    // Leading-1 normalization: sent 11-digit maps to a 10-digit clean key (last-10 match).
+    @isTest static void testMassLeadingOneMatch() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"clean":{"5551230077":{"phone_number":"5551230077"}},"match":[]}'));
         Test.startTest();
-        Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'5551230077'});
+        Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'15551230077'});
         Test.stopTest();
-        System.assertEquals(true, res.get('5551230077').clean);
+        System.assertEquals(true, res.get('15551230077').clean, 'leading-1 sent digit maps to a 10-digit clean key');
+    }
+
+    // Sent phone absent from both clean and match -> Error (never default to Clear).
+    @isTest static void testMassPhoneAbsentIsError() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"clean":{"5550000000":{"phone_number":"5550000000"}},"match":[]}'));
+        Test.startTest();
+        Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'5551230003'});
+        Test.stopTest();
+        System.assertEquals(true, res.get('5551230003').isError);
+        System.assertEquals(false, res.get('5551230003').clean);
+    }
+
+    // Defensive: a match element without phone_number (uses 'phone') and without status still classifies DNC, no crash.
+    @isTest static void testMassMatchDefensive() {
+        Test.setMock(HttpCalloutMock.class, new TCPAScrubHttpMock(200, '{"clean":{},"match":[{"phone":"5551230044"}]}'));
+        Test.startTest();
+        Map<String, TCPAScrubService.ScrubResult> res = TCPAScrubService.scrubPhones(new List<String>{'5551230044'});
+        Test.stopTest();
+        System.assertEquals(false, res.get('5551230044').isError, 'match element must classify, not error');
+        System.assertEquals(false, res.get('5551230044').clean, 'in "match" => not clean => DNC');
     }
 
     @isTest static void testErrorHttp() {
