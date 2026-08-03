@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RemoteSiteSetting xmlns="http://soap.sforce.com/2006/04/metadata">
+    <disableProtocolSecurity>false</disableProtocolSecurity>
+    <isActive>true</isActive>
+    <description>TCPA Litigator List API failover host (api101). Basic auth header built in Apex from App_Secret__c.</description>
+    <url>https://api101.tcpalitigatorlist.com</url>
+</RemoteSiteSetting>

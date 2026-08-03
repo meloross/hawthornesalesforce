@@ -127,6 +127,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>App_Secret__c.Username__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Lead.Current_Drip__c</field>
         <readable>true</readable>
     </fieldPermissions>

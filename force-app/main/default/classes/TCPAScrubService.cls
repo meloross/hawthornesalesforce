@@ -1,12 +1,16 @@
 /**
  * TCPAScrubService — calls TCPA Litigator List to scrub phone numbers.
- * Auth via Named Credential (External Credential holds the Basic-auth secret).
- * Primary: callout:TCPA_Litigator_List ; on 5xx/timeout retry once on backup.
+ * Auth: the org's External Credential will not inject Basic auth (same failure seen with Slack), so we
+ * call the raw vendor URL and build the "Authorization: Basic base64(user:pass)" header ourselves from
+ * the App_Secret__c record Name='TCPA_API' (Username__c + Secret_Value__c). The two hosts are allow-listed
+ * by the TCPA_Litigator_List / TCPA_Litigator_List_Backup Remote Site Settings.
+ * Primary: https://api.tcpalitigatorlist.com ; on 5xx/timeout retry once on the api101 backup host.
  */
 public with sharing class TCPAScrubService {
 
-    public static final String PRIMARY = 'callout:TCPA_Litigator_List';
-    public static final String BACKUP  = 'callout:TCPA_Litigator_List_Backup';
+    public static final String PRIMARY = 'https://api.tcpalitigatorlist.com';
+    public static final String BACKUP  = 'https://api101.tcpalitigatorlist.com';
+    @TestVisible private static final String TCPA_SECRET_NAME = 'TCPA_API';
 
     public class ScrubResult {
         public String phone;
@@ -136,6 +140,7 @@ public with sharing class TCPAScrubService {
             HttpRequest req = new HttpRequest();
             req.setEndpoint(endpoint);
             req.setMethod('POST');
+            req.setHeader('Authorization', basicAuthHeader());   // Basic auth built here, not by an External Credential
             req.setHeader('Content-Type', contentType);
             req.setHeader('Accept', 'application/json');
             req.setTimeout(120000);
@@ -143,6 +148,29 @@ public with sharing class TCPAScrubService {
             return new Http().send(req);
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    // ---- Basic auth built in Apex (the org's External Credential won't inject it) ----
+    private static String cachedAuthHeader;
+    @TestVisible
+    private static String basicAuthHeader() {
+        if (cachedAuthHeader != null) return cachedAuthHeader;
+        String user = '';
+        String pass = '';
+        for (App_Secret__c s : new SecretStore().read(TCPA_SECRET_NAME)) {
+            user = (s.Username__c != null) ? s.Username__c.trim() : '';
+            pass = (s.Secret_Value__c != null) ? s.Secret_Value__c.trim() : '';
+        }
+        cachedAuthHeader = 'Basic ' + EncodingUtil.base64Encode(Blob.valueOf(user + ':' + pass));
+        return cachedAuthHeader;
+    }
+
+    /** Reads the credential in system context (without sharing) so the batch/scheduler works for any
+     *  running user, while FLS + Private sharing keep the value out of reps' reach (mirrors SlackService). */
+    private without sharing class SecretStore {
+        List<App_Secret__c> read(String name) {
+            return [SELECT Username__c, Secret_Value__c FROM App_Secret__c WHERE Name = :name LIMIT 1];
         }
     }
 
