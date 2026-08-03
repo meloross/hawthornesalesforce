@@ -9,7 +9,8 @@ public with sharing class LeadMarketingService {
         if (leadIds == null || leadIds.isEmpty()) return;
         List<Lead> toUpdate = new List<Lead>();
         for (Lead l : [SELECT Id, SMS_Opt_Out__c, Current_Drip__c FROM Lead WHERE Id IN :leadIds]) {
-            toUpdate.add(new Lead(Id = l.Id, SMS_Opt_Out__c = true, Current_Drip__c = 'None'));
+            toUpdate.add(new Lead(Id = l.Id, SMS_Opt_Out__c = true, Current_Drip__c = 'None',
+                                  SMS_Opt_Out_Source__c = 'Inbound STOP'));
         }
         if (!toUpdate.isEmpty()) update toUpdate;
     }
@@ -19,7 +20,12 @@ public with sharing class LeadMarketingService {
         recordEngagement(new List<EngagementInput>{ new EngagementInput(leadId, engagementType) });
     }
 
-    /** Bulk write-back: stamp engagement fields, set Reply_Received__c, alert the rep (Slack + Task). */
+    /**
+     * Bulk write-back: stamp the engagement fields + set Reply_Received__c.
+     * The office Slack alert + "Lead replied — respond" task are raised by the Lead trigger
+     * (LeadTriggerHandler) off this field write — so this API path and Marketing Cloud's direct
+     * field writes both route through ONE hand-off (no double post/task).
+     */
     public static void recordEngagement(List<EngagementInput> inputs) {
         if (inputs == null || inputs.isEmpty()) return;
         Map<Id, String> typeById = new Map<Id, String>();
@@ -28,35 +34,16 @@ public with sharing class LeadMarketingService {
         }
         if (typeById.isEmpty()) return;
 
-        Map<Id, Lead> leads = new Map<Id, Lead>(
-            [SELECT Id, Name, Company, Office__c, OwnerId FROM Lead WHERE Id IN :typeById.keySet()]);
-        List<Lead> updates = new List<Lead>();
-        List<Task> tasks = new List<Task>();
-        List<SlackNotifier.Notification> notes = new List<SlackNotifier.Notification>();
         Datetime nowTs = System.now();
-
-        for (Id lid : typeById.keySet()) {
-            if (!leads.containsKey(lid)) continue;
-            Lead l = leads.get(lid);
-            String t = typeById.get(lid);
+        List<Lead> updates = new List<Lead>();
+        // Only touch leads that actually exist (avoids errors on stale ids).
+        for (Id lid : new Map<Id, Lead>([SELECT Id FROM Lead WHERE Id IN :typeById.keySet()]).keySet()) {
             Lead upd = new Lead(Id = lid, Last_Engagement_At__c = nowTs, Reply_Received__c = true);
+            String t = typeById.get(lid);
             if (String.isNotBlank(t)) upd.Last_Engagement_Type__c = t;
             updates.add(upd);
-            tasks.add(new Task(WhoId = lid, OwnerId = l.OwnerId, Subject = 'Lead engaged — follow up',
-                               ActivityDate = Date.today(), Priority = 'High', Status = 'Not Started'));
-            SlackNotifier.Notification n = new SlackNotifier.Notification();
-            n.kind = 'LEAD_ENGAGED';
-            n.officeCode = l.Office__c;
-            n.recordName = l.Name;
-            n.company = l.Company;
-            n.ownerId = l.OwnerId;
-            n.detail = t;
-            notes.add(n);
         }
-
-        if (!updates.isEmpty()) update updates;
-        if (!tasks.isEmpty()) insert tasks;
-        if (!notes.isEmpty()) System.enqueueJob(new SlackNotifier(notes));
+        if (!updates.isEmpty()) update updates;   // trigger raises Slack + task
     }
 
     public class EngagementInput {

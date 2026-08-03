@@ -56,6 +56,10 @@ public with sharing class SlackNotifier implements Queueable, Database.AllowsCal
             return ':wave: *Lead engaged' + t + '* — ' + safe(n.company)
                 + ' · ' + safe(n.recordName) + ' · owner ' + owner;
         }
+        if (n.kind == 'LEAD_REPLIED') {
+            return ':fire: *' + safe(n.recordName) + ' replied* — ' + safe(n.detail)
+                + ' · owner ' + owner;
+        }
         if (n.kind == 'LEAD_QUALIFIED' || n.kind == 'LEAD_APPT') {
             String label = (n.kind == 'LEAD_APPT') ? 'Appointment Set' : 'Qualified';
             return ':telephone_receiver: *' + label + '* — ' + safe(n.company)

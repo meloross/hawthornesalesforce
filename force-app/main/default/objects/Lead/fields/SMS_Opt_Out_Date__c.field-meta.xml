@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>SMS_Opt_Out_Date__c</fullName>
+    <label>SMS Opt-Out Date</label>
+    <inlineHelpText>When SMS_Opt_Out__c was set true. Stamped automatically the moment opt-out flips true, by any means (inbound STOP, manual, Marketing Cloud sync).</inlineHelpText>
+    <required>false</required>
+    <type>DateTime</type>
+</CustomField>

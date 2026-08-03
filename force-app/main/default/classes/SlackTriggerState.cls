@@ -7,4 +7,5 @@ public class SlackTriggerState {
     public static Set<Id> oppsNotified = new Set<Id>();       // Opp Slack notify
     public static Set<Id> assignedActioned = new Set<Id>();   // Speed-to-Lead task + Slack
     public static Set<Id> callbackActioned = new Set<Id>();   // Callback-requested task
+    public static Set<Id> engagementActioned = new Set<Id>(); // Lead-replied/warm-engagement task + Slack
 }

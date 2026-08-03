@@ -119,6 +119,14 @@
                 <behavior>Edit</behavior>
                 <field>SMS_Opt_Out__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>SMS_Opt_Out_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>SMS_Opt_Out_Source__c</field>
+            </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>
@@ -165,6 +173,10 @@
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Last_Engagement_At__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Last_Engagement_Detail__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>

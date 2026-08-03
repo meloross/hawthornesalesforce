@@ -29,6 +29,16 @@
                 <default>false</default>
                 <label>Inbound Call</label>
             </value>
+            <value>
+                <fullName>Form Submit</fullName>
+                <default>false</default>
+                <label>Form Submit</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

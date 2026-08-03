@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Engagement_Detail__c</fullName>
+    <label>Last Engagement Detail</label>
+    <inlineHelpText>Optional context for the most recent engagement (e.g. the SMS reply text, the form name, the link clicked). Written back by Marketing Cloud / the send channel.</inlineHelpText>
+    <externalId>false</externalId>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

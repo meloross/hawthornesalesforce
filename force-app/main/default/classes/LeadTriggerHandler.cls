@@ -19,6 +19,9 @@ public with sharing class LeadTriggerHandler {
     // and 'Already Enrolled Elsewhere') is a SOFT disqualification -> win-back eligible.
     private static final Set<String> HARD_SUPPRESS_DISPOS = new Set<String>{'Do Not Call', 'Bad/Wrong Number', 'Duplicate'};
 
+    // Warm inbound engagement types that trigger the office hand-off (Slack + "respond" task).
+    private static final Set<String> WARM_ENGAGEMENT = new Set<String>{'SMS Reply', 'Email Click', 'Inbound Call'};
+
     // ---------- BEFORE: field mutations ----------
     public static void handleBefore(List<Lead> news, Map<Id, Lead> oldMap) {
         Datetime nowTs = System.now();
@@ -75,6 +78,20 @@ public with sharing class LeadTriggerHandler {
                     if (elig) enterDrip(l, 'Onboarding', nowTs);
                 }
             }
+
+            // ----- Quiet-hours timezone: derive when blank or when the phone/state source changed -----
+            Boolean phoneChanged = (prior == null) ? (l.Phone != null) : (l.Phone != prior.Phone);
+            Boolean stateChanged = (prior == null) ? (l.State != null) : (l.State != prior.State);
+            if (String.isBlank(l.Local_Timezone__c) || phoneChanged || stateChanged) {
+                String tz = LeadTimezoneUtil.resolve(l.Phone, l.State, l.Office__c);
+                if (String.isNotBlank(tz)) l.Local_Timezone__c = tz;
+            }
+
+            // ----- Opt-out stamp: when SMS_Opt_Out__c flips true by any means, stamp date + source -----
+            if (l.SMS_Opt_Out__c == true && (prior == null || prior.SMS_Opt_Out__c != true)) {
+                if (l.SMS_Opt_Out_Date__c == null) l.SMS_Opt_Out_Date__c = nowTs;
+                if (String.isBlank(l.SMS_Opt_Out_Source__c)) l.SMS_Opt_Out_Source__c = 'System';
+            }
         }
     }
 
@@ -119,6 +136,19 @@ public with sharing class LeadTriggerHandler {
                     && !SlackTriggerState.leadsNotified.contains(l.Id)) {
                 SlackTriggerState.leadsNotified.add(l.Id);
                 notes.add(leadNote(l.Status == 'Appointment Set' ? 'LEAD_APPT' : 'LEAD_QUALIFIED', l, null));
+            }
+
+            // Engagement hand-off: Lead replied (Reply_Received__c false->true) OR a warm engagement type
+            // (SMS Reply / Email Click / Inbound Call). Fires off Marketing Cloud's direct field writes AND
+            // the recordEngagement API path — one hand-off, no double post/task. Routes by Office__c.
+            Boolean replyFlipped = (l.Reply_Received__c == true) && (prior == null || prior.Reply_Received__c != true);
+            Boolean warmType = (l.Last_Engagement_Type__c != null)
+                    && (prior == null || l.Last_Engagement_Type__c != prior.Last_Engagement_Type__c)
+                    && WARM_ENGAGEMENT.contains(l.Last_Engagement_Type__c);
+            if ((replyFlipped || warmType) && !SlackTriggerState.engagementActioned.contains(l.Id)) {
+                SlackTriggerState.engagementActioned.add(l.Id);
+                tasks.add(newTask(l, 'Lead replied — respond'));
+                notes.add(leadNote('LEAD_REPLIED', l, l.Last_Engagement_Type__c));
             }
         }
 

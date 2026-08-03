@@ -21,7 +21,8 @@ private class LeadMarketingEngineTest {
     static Map<Id, Lead> priorMap(List<Lead> ls) {
         return new Map<Id, Lead>([
             SELECT Id, Status, Call_Disposition__c, TCPA_Scrub_Status__c,
-                   SMS_Opt_Out__c, Global_DNC__c, Current_Drip__c
+                   SMS_Opt_Out__c, Global_DNC__c, Current_Drip__c, Phone, State,
+                   Reply_Received__c, Last_Engagement_Type__c, Local_Timezone__c
             FROM Lead WHERE Id IN :ls]);
     }
 
@@ -165,9 +166,89 @@ private class LeadMarketingEngineTest {
         Test.startTest();
         LeadMarketingService.setOptOut(new Set<Id>{ l.Id });
         Test.stopTest();
-        Lead check = [SELECT SMS_Opt_Out__c, Current_Drip__c FROM Lead WHERE Id = :l.Id];
+        Lead check = [SELECT SMS_Opt_Out__c, Current_Drip__c, SMS_Opt_Out_Date__c, SMS_Opt_Out_Source__c FROM Lead WHERE Id = :l.Id];
         System.assertEquals(true, check.SMS_Opt_Out__c);
         System.assertEquals('None', check.Current_Drip__c);
+        System.assertNotEquals(null, check.SMS_Opt_Out_Date__c, 'opt-out date stamped by the trigger');
+        System.assertEquals('Inbound STOP', check.SMS_Opt_Out_Source__c, 'setOptOut labels the source');
+    }
+
+    // Opt-out stamped when SMS_Opt_Out__c is flipped true directly (e.g. Marketing Cloud sync); source defaults to System.
+    @isTest
+    static void optOutStampViaTrigger() {
+        Lead l = makeClearLeads(1)[0];
+        insert l;
+        Test.startTest();
+        l.SMS_Opt_Out__c = true;
+        update l;
+        Test.stopTest();
+        Lead check = [SELECT SMS_Opt_Out_Date__c, SMS_Opt_Out_Source__c FROM Lead WHERE Id = :l.Id];
+        System.assertNotEquals(null, check.SMS_Opt_Out_Date__c);
+        System.assertEquals('System', check.SMS_Opt_Out_Source__c);
+    }
+
+    // Timezone derived on insert: an 813 (Tampa) number resolves to Eastern; office fallback also Eastern.
+    @isTest
+    static void timezoneDerivedOnInsert() {
+        Lead byPhone = new Lead(LastName='TZ', Company='TZ Co', Status='New', Office__c='HFS_TPA',
+                                TCPA_Scrub_Status__c='Clear', Phone='(415) 555-0100');  // 415 = Pacific
+        insert byPhone;
+        System.assertEquals('America/Los_Angeles',
+            [SELECT Local_Timezone__c FROM Lead WHERE Id = :byPhone.Id].Local_Timezone__c,
+            'area code 415 -> Pacific');
+
+        Lead byOffice = new Lead(LastName='TZ2', Company='TZ Co2', Status='New', Office__c='HFS_TPA',
+                                 TCPA_Scrub_Status__c='Clear');  // no phone/state -> office default ET
+        insert byOffice;
+        System.assertEquals('America/New_York',
+            [SELECT Local_Timezone__c FROM Lead WHERE Id = :byOffice.Id].Local_Timezone__c,
+            'no phone/state -> office (Tampa) default Eastern');
+    }
+
+    // Engagement hand-off fires exactly once on a warm reply, with the LEAD_REPLIED Slack note + task.
+    @isTest
+    static void engagementHandOffFires() {
+        Test.setMock(HttpCalloutMock.class, new SlackHttpMock(200, '{"ok":true}'));
+        Lead l = makeClearLeads(1)[0];
+        insert l;
+        Test.startTest();
+        l.Reply_Received__c = true;
+        l.Last_Engagement_Type__c = 'SMS Reply';
+        update l;
+        Test.stopTest();
+        System.assertEquals(1,
+            [SELECT COUNT() FROM Task WHERE WhoId = :l.Id AND Subject = 'Lead replied — respond'],
+            'one hand-off task');
+        List<SlackNotifier.Notification> notes = LeadTriggerHandler.lastNotes;
+        Integer replied = 0;
+        for (SlackNotifier.Notification n : notes) if (n.kind == 'LEAD_REPLIED') replied++;
+        System.assertEquals(1, replied, 'one LEAD_REPLIED Slack note');
+    }
+
+    // A non-warm engagement type (Email Open) with no reply flip does NOT raise the hand-off.
+    @isTest
+    static void nonWarmEngagementNoHandOff() {
+        Test.setMock(HttpCalloutMock.class, new SlackHttpMock(200, '{"ok":true}'));
+        Lead l = makeClearLeads(1)[0];
+        insert l;
+        Test.startTest();
+        l.Last_Engagement_Type__c = 'Email Open';   // not warm, and Reply_Received__c stays false
+        update l;
+        Test.stopTest();
+        System.assertEquals(0,
+            [SELECT COUNT() FROM Task WHERE WhoId = :l.Id AND Subject = 'Lead replied — respond'],
+            'Email Open alone is not a warm hand-off');
+    }
+
+    // The composed LEAD_REPLIED message reads "🔥 {Lead} replied — {type} · owner {Owner}".
+    @isTest
+    static void repliedMessageComposes() {
+        SlackNotifier.Notification n = new SlackNotifier.Notification();
+        n.kind = 'LEAD_REPLIED'; n.recordName = 'Jane Doe'; n.detail = 'SMS Reply';
+        String msg = new SlackNotifier(new List<SlackNotifier.Notification>{ n }).compose(n, 'Garrett Wright');
+        System.assert(msg.contains('Jane Doe replied'), 'text: ' + msg);
+        System.assert(msg.contains('SMS Reply'), 'type in text: ' + msg);
+        System.assert(msg.contains('Garrett Wright'), 'owner in text: ' + msg);
     }
 
     @isTest
@@ -182,8 +263,9 @@ private class LeadMarketingEngineTest {
         System.assertEquals('SMS Reply', check.Last_Engagement_Type__c);
         System.assertNotEquals(null, check.Last_Engagement_At__c);
         System.assertEquals(true, check.Reply_Received__c);
-        List<Task> tasks = [SELECT Id FROM Task WHERE WhoId = :l.Id AND Subject = 'Lead engaged — follow up'];
-        System.assertEquals(1, tasks.size());
+        // recordEngagement now writes fields only; the trigger raises the single "Lead replied — respond" hand-off.
+        List<Task> tasks = [SELECT Id FROM Task WHERE WhoId = :l.Id AND Subject = 'Lead replied — respond'];
+        System.assertEquals(1, tasks.size(), 'exactly one hand-off task, no double-fire');
     }
 
     @isTest
