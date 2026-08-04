@@ -109,6 +109,17 @@ public with sharing class LeadTriggerHandler {
             }
             if (!websiteNew.isEmpty()) assignRoundRobin(websiteNew);
         }
+
+        // ----- Switchable-sender: stamp the resolved outbound SMS number (additive; only this field) -----
+        // Runs last so OwnerId is final (e.g. after the website round-robin). Insert: always; update: when the
+        // owner changed or the field is blank. Touches nothing on Status/TCPA/Office/consent, and sends nothing.
+        List<Lead> toStamp = new List<Lead>();
+        for (Lead l : news) {
+            Lead prior = (oldMap != null) ? oldMap.get(l.Id) : null;
+            Boolean ownerChanged = (prior != null) && (l.OwnerId != prior.OwnerId);
+            if (oldMap == null || ownerChanged || String.isBlank(l.Outbound_SMS_Number__c)) toStamp.add(l);
+        }
+        if (!toStamp.isEmpty()) SmsSenderResolver.stampSenders(toStamp);
     }
 
     // ---------- AFTER: tasks + Slack ----------

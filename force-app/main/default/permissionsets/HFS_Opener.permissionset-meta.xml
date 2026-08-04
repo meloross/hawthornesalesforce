@@ -602,6 +602,16 @@
         <readable>true</readable>
         <editable>true</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>User.SMS_Sending_Number__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>Lead.Outbound_SMS_Number__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
     <userPermissions>
         <enabled>true</enabled>
         <name>ViewEncryptedData</name>

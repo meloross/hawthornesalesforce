@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>SMS_Sending_Number__c</fullName>
+    <label>SMS Sending Number</label>
+    <inlineHelpText>The rep's assigned outbound SMS number in E.164 (e.g. +13125550123). Used by the marketing SMS switchable-sender resolver in PerRep mode.</inlineHelpText>
+    <externalId>false</externalId>
+    <length>40</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Outbound_SMS_Number__c</fullName>
+    <label>Outbound SMS Number</label>
+    <inlineHelpText>Resolved outbound SMS sender number (E.164) stamped by the switchable-sender resolver — the lead owner's rep number (PerRep mode) or the dedicated marketing number (Dedicated mode). Read by Marketing Cloud journeys / KloudiService at send time.</inlineHelpText>
+    <externalId>false</externalId>
+    <length>40</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

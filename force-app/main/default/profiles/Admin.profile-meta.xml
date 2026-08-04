@@ -515,4 +515,14 @@
         <field>Lead.Additional_Details__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>User.SMS_Sending_Number__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Lead.Outbound_SMS_Number__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
 </Profile>

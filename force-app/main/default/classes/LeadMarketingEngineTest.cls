@@ -21,8 +21,8 @@ private class LeadMarketingEngineTest {
     static Map<Id, Lead> priorMap(List<Lead> ls) {
         return new Map<Id, Lead>([
             SELECT Id, Status, Call_Disposition__c, TCPA_Scrub_Status__c,
-                   SMS_Opt_Out__c, Global_DNC__c, Current_Drip__c, Phone, State,
-                   Reply_Received__c, Last_Engagement_Type__c, Local_Timezone__c
+                   SMS_Opt_Out__c, Global_DNC__c, Current_Drip__c, Phone, State, OwnerId,
+                   Reply_Received__c, Last_Engagement_Type__c, Local_Timezone__c, Outbound_SMS_Number__c
             FROM Lead WHERE Id IN :ls]);
     }
 

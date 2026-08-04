@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Mode__c</fullName>
+    <label>Mode</label>
+    <inlineHelpText>PerRep = send marketing SMS from each lead owner's assigned number. Dedicated = send all from the Dedicated Number. Enter PerRep or Dedicated (case-insensitive). Flip this to switch every outbound marketing SMS with no deploy. (Text, not a picklist — custom settings don't support picklists.)</inlineHelpText>
+    <defaultValue>"PerRep"</defaultValue>
+    <externalId>false</externalId>
+    <length>20</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

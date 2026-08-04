@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dedicated_Number__c</fullName>
+    <label>Dedicated Number</label>
+    <inlineHelpText>The single dedicated marketing SMS number (E.164, e.g. +13125550100). Used when Mode = Dedicated, and as the fallback sender in PerRep mode when an owner has no assigned number.</inlineHelpText>
+    <externalId>false</externalId>
+    <length>40</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
