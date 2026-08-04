@@ -250,16 +250,8 @@ public with sharing class LeadTriggerHandler {
     private static List<Id> roundRobinReps() {
         if (repsOverride != null) return repsOverride;
         if (cachedRoundRobinReps != null) return cachedRoundRobinReps;
-        Set<Id> ids = new Set<Id>();
-        for (PermissionSetAssignment psa : [
-                SELECT AssigneeId FROM PermissionSetAssignment
-                WHERE PermissionSet.Name IN ('HFS_Hybrid', 'HFS_Opener') AND Assignee.IsActive = true]) {
-            ids.add(psa.AssigneeId);
-        }
-        List<Id> ordered = new List<Id>();
-        for (User u : [SELECT Id FROM User WHERE Id IN :ids ORDER BY Name]) ordered.add(u.Id);
-        cachedRoundRobinReps = ordered;
-        return ordered;
+        cachedRoundRobinReps = new Elevated().reps();
+        return cachedRoundRobinReps;
     }
 
     /** Round-robin OwnerId across the active rep set, keyed on the cumulative inbound-lead count so the
@@ -287,21 +279,42 @@ public with sharing class LeadTriggerHandler {
     /** rep (office-queue member) -> office code, built from the 4 office queues' membership. Cached per transaction. */
     private static Map<Id, String> repOfficeMap() {
         if (repOfficeCache != null) return repOfficeCache;
-        repOfficeCache = new Map<Id, String>();
-        Map<Id, String> groupIdToOffice = new Map<Id, String>();
-        for (Group g : [SELECT Id, DeveloperName FROM Group
-                        WHERE Type = 'Queue' AND DeveloperName IN :QUEUE_TO_OFFICE.keySet()]) {
-            groupIdToOffice.put(g.Id, QUEUE_TO_OFFICE.get(g.DeveloperName));
+        repOfficeCache = new Elevated().officeByRep(QUEUE_TO_OFFICE);
+        return repOfficeCache;
+    }
+
+    /** Rep + office-membership lookups run WITHOUT sharing so they resolve in restricted contexts —
+     *  notably the Kloudi Site guest user, which otherwise can't see User/GroupMember rows via sharing
+     *  (which left the round-robin rep list empty and defaulted the owner). Object CRUD is system-mode. */
+    private without sharing class Elevated {
+        List<Id> reps() {
+            Set<Id> ids = new Set<Id>();
+            for (PermissionSetAssignment psa : [
+                    SELECT AssigneeId FROM PermissionSetAssignment
+                    WHERE PermissionSet.Name IN ('HFS_Hybrid', 'HFS_Opener') AND Assignee.IsActive = true]) {
+                ids.add(psa.AssigneeId);
+            }
+            List<Id> ordered = new List<Id>();
+            for (User u : [SELECT Id FROM User WHERE Id IN :ids ORDER BY Name]) ordered.add(u.Id);
+            return ordered;
         }
-        if (!groupIdToOffice.isEmpty()) {
-            for (GroupMember gm : [SELECT GroupId, UserOrGroupId FROM GroupMember
-                                   WHERE GroupId IN :groupIdToOffice.keySet()]) {
-                if (String.valueOf(gm.UserOrGroupId).startsWith('005')) {
-                    repOfficeCache.put(gm.UserOrGroupId, groupIdToOffice.get(gm.GroupId));
+        Map<Id, String> officeByRep(Map<String, String> queueToOffice) {
+            Map<Id, String> out = new Map<Id, String>();
+            Map<Id, String> groupIdToOffice = new Map<Id, String>();
+            for (Group g : [SELECT Id, DeveloperName FROM Group
+                            WHERE Type = 'Queue' AND DeveloperName IN :queueToOffice.keySet()]) {
+                groupIdToOffice.put(g.Id, queueToOffice.get(g.DeveloperName));
+            }
+            if (!groupIdToOffice.isEmpty()) {
+                for (GroupMember gm : [SELECT GroupId, UserOrGroupId FROM GroupMember
+                                       WHERE GroupId IN :groupIdToOffice.keySet()]) {
+                    if (String.valueOf(gm.UserOrGroupId).startsWith('005')) {
+                        out.put(gm.UserOrGroupId, groupIdToOffice.get(gm.GroupId));
+                    }
                 }
             }
+            return out;
         }
-        return repOfficeCache;
     }
 
     /** Office code for a rep (office-queue member); null if the user is in no office queue.
