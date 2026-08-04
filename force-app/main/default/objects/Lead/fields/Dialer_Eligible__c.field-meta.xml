@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dialer_Eligible__c</fullName>
+    <label>Dialer Eligible</label>
+    <inlineHelpText>TRUE when TCPA-Clear, not Global DNC, not Bad Number, and a callable Phone/MobilePhone exists. Static gate for the outbound dialer list; the 8am-9pm recipient-local window is applied at export, not here.</inlineHelpText>
+    <formula>ISPICKVAL(TCPA_Scrub_Status__c, &quot;Clear&quot;)
+&amp;&amp; NOT(Global_DNC__c)
+&amp;&amp; NOT(Bad_Number__c)
+&amp;&amp; OR(NOT(ISBLANK(Phone)), NOT(ISBLANK(MobilePhone)))</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <type>Checkbox</type>
+</CustomField>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Time_Zone__c</fullName>
+    <label>Time Zone</label>
+    <type>Text</type>
+    <length>60</length>
+    <required>false</required>
+    <inlineHelpText>Recipient IANA timezone (from Lead.Local_Timezone__c, else resolved) - drives the 8am-9pm in-window export filter.</inlineHelpText>
+</CustomField>

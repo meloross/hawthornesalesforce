@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Ok_To_Call__c</fullName>
+    <label>Ok To Call</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <inlineHelpText>Set true when staged; the export sends only Ok_To_Call rows currently inside their local 8am-9pm window.</inlineHelpText>
+</CustomField>
